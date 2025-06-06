@@ -1,5 +1,3 @@
-'''
-
 # 🧠 Backend API with TypeScript | Modular Structure
 
 This is a scalable and production-ready **Node.js + TypeScript** backend API project following a **modular folder structure** with integrated tools like **ESLint**, **Prettier**, and custom error handling.
