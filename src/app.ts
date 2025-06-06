@@ -25,7 +25,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.get('/', (_req, res) => {
-  res.send('Hello World!');
+  res.json({
+    message: 'Welcome to the API',
+    status: 'success',
+    data: {
+      name: 'API',
+      version: '1.0.0',
+      description: 'A simple Backend API with TypeScript and Express',
+    },
+  });
 });
 
 app.use('/api/v1', router);

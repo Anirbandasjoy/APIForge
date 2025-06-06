@@ -10,8 +10,6 @@ const errorHandler: ErrorRequestHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  console.error(err);
-
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message = getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR);
   let errorDetail: any = undefined;
