@@ -1,8 +1,18 @@
-import ApiError from '@/utils/apiError';
 import { sendErrorResponse } from '@/utils/response';
 import { Request, Response, ErrorRequestHandler, NextFunction } from 'express';
-
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
+import { ZodError } from 'zod';
+import mongoose from 'mongoose';
+import { MongoServerError } from 'mongodb';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+
+import { handleZodError } from '../errors/handlers/zodErrorHandler';
+import { handleMongooseCastError } from '../errors/handlers/mongooseCastErrorHandler';
+import { handleDuplicateKeyError } from '../errors/handlers/duplicateKeyErrorHandler';
+import { handleMongooseValidationError } from '../errors/handlers/mongooseValidationErrorHandler';
+import { handleSyntaxError } from '../errors/handlers/syntaxErrorHandler';
+import { handleJWTError } from '../errors/handlers/jwtErrorHandler';
+import ApiError from '../errors/apiError';
 
 const errorHandler: ErrorRequestHandler = (
   err: any,
@@ -12,29 +22,84 @@ const errorHandler: ErrorRequestHandler = (
 ) => {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message = getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR);
-  let errorDetail: any = undefined;
+  let errorDetails: any = undefined;
 
-  if (err instanceof ApiError) {
+  // Zod Error
+  if (err instanceof ZodError) {
+    const simplified = handleZodError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // Mongoose CastError
+  else if (err instanceof mongoose.Error.CastError) {
+    const simplified = handleMongooseCastError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // Mongoose ValidationError
+  else if (err instanceof mongoose.Error.ValidationError) {
+    const simplified = handleMongooseValidationError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // Mongo Duplicate Key Error
+  else if (err instanceof MongoServerError && err.code === 11000) {
+    const simplified = handleDuplicateKeyError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // SyntaxError (Invalid JSON)
+  else if (err instanceof SyntaxError && 'body' in err) {
+    const simplified = handleSyntaxError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // JWT Errors
+  else if (err instanceof JsonWebTokenError || err instanceof TokenExpiredError) {
+    const simplified = handleJWTError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorDetails = simplified.errorDetails;
+  }
+
+  // Custom ApiError
+  else if (err instanceof ApiError) {
     statusCode = err.statusCode;
     message = err.message;
-    errorDetail = err.stack;
-  } else if ('statusCode' in err && 'message' in err) {
-    statusCode = (err as any).statusCode || statusCode;
+    errorDetails = err.stack;
+  }
+
+  // Generic Error with statusCode and message
+  else if ('statusCode' in err && 'message' in err) {
+    statusCode = err.statusCode || statusCode;
     message = err.message;
-    errorDetail = err.stack;
-  } else if (err.message) {
+    errorDetails = err.stack;
+  }
+
+  // Fallback
+  else if (err.message) {
     message = err.message;
-    errorDetail = err.stack;
+    errorDetails = err.stack;
   }
 
   if (process.env.NODE_ENV === 'production') {
-    errorDetail = undefined;
+    errorDetails = undefined;
   }
 
   sendErrorResponse(res, {
     statusCode,
     message,
-    error: errorDetail,
+    error: errorDetails,
   });
 };
 
