@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email Verification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f6f9fc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+      h1 {
+        color: #1a73e8;
+        font-size: 28px;
+        margin-bottom: 0;
+      }
+      p {
+        font-size: 16px;
+        line-height: 1.5;
+        margin-top: 15px;
+        margin-bottom: 25px;
+      }
+      .btn {
+        display: inline-block;
+        background-color: #1a73e8;
+        color: white !important;
+        text-decoration: none;
+        padding: 14px 25px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 16px;
+        box-shadow: 0 3px 6px rgba(26, 115, 232, 0.3);
+        transition: background-color 0.3s ease;
+      }
+      .btn:hover {
+        background-color: #155ab6;
+      }
+      .footer {
+        margin-top: 35px;
+        font-size: 13px;
+        color: #888888;
+        text-align: center;
+        border-top: 1px solid #eaeaea;
+        padding-top: 20px;
+      }
+      .footer a {
+        color: #1a73e8;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Confirm Your Email Address</h1>
+      <p>Hello {{user_name}}</p>
+      <p>
+        Thank you for registering with us! Please confirm your email address by clicking the button
+        below.
+      </p>
+      <p style="text-align: center">
+        <a href="{{verification_link}}" class="btn" target="_blank" rel="noopener">Verify Email</a>
+      </p>
+      <p>If the button above does not work, copy and paste the following link into your browser:</p>
+      <p style="word-break: break-all">
+        <a href="{{verification_link}}" target="_blank" rel="noopener">{{verification_link}}</a>
+      </p>
+      <p>Thanks,<br />The Team</p>
+    </div>
+    <div class="footer">
+      <p>If you did not create an account, no further action is required.</p>
+      <p>© 2025 Devnifly. All rights reserved.</p>
+    </div>
+  </body>
+</html>

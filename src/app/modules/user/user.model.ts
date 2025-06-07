@@ -7,6 +7,8 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    profilePicture: { type: String, default: '' },
+    lastLogin: { type: Date, default: null },
     role: { type: String, enum: ['user', 'admin', 'superadmin'], default: 'user' },
   },
   { timestamps: true }

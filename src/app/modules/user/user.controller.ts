@@ -1,20 +1,22 @@
 import catchAsync from '@/utils/catchAsync';
-import { createUser, getUsers } from './user.service';
+import { getUsers, processUserRegistration } from './user.service';
 import { sendSuccessResponse } from '@/utils/response';
 import { StatusCodes } from 'http-status-codes';
 
 import { BadRequestError } from '@/app/errors/apiError';
 
-export const createUserHandler = catchAsync(async (req, res) => {
-  const user = await createUser(req.body);
-  if (!user) {
-    throw BadRequestError('User registration failed');
-  }
+export const processUserRegistrationHandler = catchAsync(async (req, res) => {
+  const { message } = await processUserRegistration(req.body);
+  sendSuccessResponse(res, {
+    statusCode: StatusCodes.OK,
+    message,
+  });
+});
 
+export const registerUserHandler = catchAsync(async (_req, res) => {
   sendSuccessResponse(res, {
     statusCode: StatusCodes.CREATED,
-    message: 'User created successfully',
-    data: user,
+    message: 'User registered successfully',
   });
 });
 

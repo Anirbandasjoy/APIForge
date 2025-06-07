@@ -5,6 +5,7 @@ export const createUserSchema = z.object({
     name: z.string({ required_error: 'Name is required' }),
     email: z.string().email({ message: 'Invalid email address' }),
     password: z.string().min(8, { message: 'Password must be at least 6 characters' }),
+    profilePicture: z.string().url({ message: 'Invalid URL for profile picture' }).optional(),
     role: z
       .enum(['user', 'admin', 'superadmin'], {
         required_error: 'Role is required',
