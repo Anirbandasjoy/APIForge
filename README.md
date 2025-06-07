@@ -22,6 +22,16 @@ src/
 │   ├── notFoundHandler.ts
 │   └── validateRequest.ts
 │
+├── errors/
+│   ├── handlers/
+│   │   ├── duplicateKeyErrorHandler.ts
+│   │   ├── jwtErrorHandler.ts
+│   │   ├── mongooseCastErrorHandler.ts
+│   │   ├── mongooseValidationErrorHandler.ts
+│   │   ├── syntaxErrorHandler.ts
+│   │   └── zodErrorHandler.ts
+│   └── apiErrors.ts
+│
 ├── modules/                    # Feature-based modular system
 │   └── user/                   # User domain/module
 │       ├── user.controller.ts
@@ -56,7 +66,7 @@ src/
 ├── .prettierrc                 # Prettier config
 ├── package.json                # Package manifest
 ├── README.md                   # Project README
-├── tsconfig.json               # TypeScript config
+└── tsconfig.json               # TypeScript config
 
 ```
 
