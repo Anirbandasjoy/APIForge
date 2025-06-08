@@ -72,6 +72,16 @@ const errorHandler: ErrorRequestHandler = (
     errorDetails = simplified.errorDetails;
   }
 
+  // Nodemailer: Missing credentials error
+  else if (
+    typeof err.message === 'string' &&
+    err.message.includes('Missing credentials for "PLAIN"')
+  ) {
+    statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    message = 'Email service credentials are missing. Please check SMTP configuration.';
+    errorDetails = err.stack;
+  }
+
   // Custom ApiError
   else if (err instanceof ApiError) {
     statusCode = err.statusCode;

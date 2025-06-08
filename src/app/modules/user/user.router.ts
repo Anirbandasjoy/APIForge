@@ -1,17 +1,22 @@
 import { Router } from 'express';
-import { getUsersHandler, registerUserHandler } from './user.controller';
+
 import validateRequest from '@/app/middlewares/validateRequest';
-import { createUserSchema } from './user.schema';
-import { processUserRegistration } from './user.service';
+
+import {
+  getUsersHandler,
+  processUserRegistrationHandler,
+  registerUserHandler,
+} from './user.controller';
+import { tokenSchema, UserSchema } from './user.schema';
 
 const userRouter = Router();
 
 userRouter.post(
   '/process-registration',
-  validateRequest(createUserSchema),
-  processUserRegistration
+  validateRequest(UserSchema),
+  processUserRegistrationHandler
 );
-userRouter.post('/register', validateRequest(createUserSchema), registerUserHandler);
+userRouter.post('/register', validateRequest(tokenSchema), registerUserHandler);
 userRouter.get('/', getUsersHandler);
 
 export default userRouter;

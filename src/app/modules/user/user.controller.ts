@@ -1,5 +1,5 @@
 import catchAsync from '@/utils/catchAsync';
-import { getUsers, processUserRegistration } from './user.service';
+import { getUsers, processUserRegistration, registerUser } from './user.service';
 import { sendSuccessResponse } from '@/utils/response';
 import { StatusCodes } from 'http-status-codes';
 
@@ -13,7 +13,9 @@ export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const registerUserHandler = catchAsync(async (_req, res) => {
+export const registerUserHandler = catchAsync(async (req, res) => {
+  await registerUser(req.body.token);
+
   sendSuccessResponse(res, {
     statusCode: StatusCodes.CREATED,
     message: 'User registered successfully',

@@ -1,11 +1,11 @@
 import { getDocuments } from '@/app/db/mongoose.helpers';
 import UserModel from './user.model';
-import { CreateUserInput } from './user.schema';
+import { TokenInput, UserSchema } from './user.schema';
 import { hashPassword } from '@/utils/hash';
 import { BadRequestError, ConflictError } from '@/app/errors/apiError';
 import { generateToken } from '@/utils/token/generateToken';
 import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
-import { SERVER_URI } from '@/config/env';
+import { JWT_ACCESS_EXPIRES_IN, JWT_ACCESS_SECRET_KEY, SERVER_URI } from '@/config/env';
 import sendingEmail from '@/services/email/emailSender';
 
 export const existUserByEmail = async <T>(
@@ -30,10 +30,7 @@ export const existUserByEmail = async <T>(
   }
 };
 
-export const processUserRegistration = async (userData: Partial<CreateUserInput>) => {
-  if (!userData.email || !userData.password || !userData.name) {
-    throw BadRequestError('Email, password, and name are required for registration');
-  }
+export const processUserRegistration = async (userData: UserSchema) => {
   const hashedPassword = await hashPassword(userData.password as string);
   await existUserByEmail(UserModel, userData.email as string);
 
@@ -44,8 +41,8 @@ export const processUserRegistration = async (userData: Partial<CreateUserInput>
       password: hashedPassword,
       profilePicture: userData.profilePicture,
     },
-    process.env.JWT_SECRET_KEY as string,
-    '1h'
+    JWT_ACCESS_SECRET_KEY as string,
+    JWT_ACCESS_EXPIRES_IN
   );
   if (!token) {
     throw BadRequestError('Failed to generate token for user registration');
@@ -64,7 +61,7 @@ export const processUserRegistration = async (userData: Partial<CreateUserInput>
   try {
     await sendingEmail(emailData);
   } catch (error) {
-    console.error(error);
+    throw error;
   }
 
   return {
@@ -72,8 +69,8 @@ export const processUserRegistration = async (userData: Partial<CreateUserInput>
   };
 };
 
-export const registerUser = async (userData: Partial<CreateUserInput>) => {
-  console.log('Registering user with data:', userData);
+export const registerUser = async (token: TokenInput) => {
+  console.log('Registering user with data:', token);
 };
 
 export const getUsers = async (query: Record<string, any>, options: any) => {
