@@ -6,6 +6,7 @@ export const UserSchema = z.object({
     email: z.string().email({ message: 'Invalid email address' }),
     password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
     profilePicture: z.string().url({ message: 'Invalid URL for profile picture' }).optional(),
+    lastLogin: z.string().nullable().optional(),
     role: z
       .enum(['user', 'admin', 'superadmin'], {
         required_error: 'Role is required',
@@ -17,13 +18,15 @@ export const UserSchema = z.object({
 });
 
 export const tokenSchema = z.object({
-  token: z
-    .string({ required_error: 'Token is required' })
-    .min(10, { message: 'Token is too short' })
-    .regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/, {
-      message: 'Invalid token format (expected JWT)',
-    }),
+  body: z.object({
+    token: z
+      .string({ required_error: 'Token is required' })
+      .min(10, { message: 'Token is too short' })
+      .regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/, {
+        message: 'Invalid token format (expected JWT)',
+      }),
+  }),
 });
 
 export type UserSchema = z.infer<typeof UserSchema>['body'];
-export type TokenInput = z.infer<typeof tokenSchema>;
+export type TokenInput = z.infer<typeof tokenSchema>['body'];

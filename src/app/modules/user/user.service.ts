@@ -1,11 +1,26 @@
 import { getDocuments } from '@/app/db/mongoose.helpers';
 import UserModel from './user.model';
-import { TokenInput, UserSchema } from './user.schema';
+import { UserSchema } from './user.schema';
 import { hashPassword } from '@/utils/hash';
-import { BadRequestError, ConflictError } from '@/app/errors/apiError';
+import {
+  BadRequestError,
+  ConflictError,
+  NonAuthoritativeInformation,
+  UnauthorizedError,
+} from '@/app/errors/apiError';
 import { generateToken } from '@/utils/token/generateToken';
 import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
-import { JWT_ACCESS_EXPIRES_IN, JWT_ACCESS_SECRET_KEY, SERVER_URI } from '@/config/env';
+import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
+import {
+  JWT_ACCESS_EXPIRES_IN,
+  JWT_ACCESS_SECRET_KEY,
+  JWT_PROCESS_REGISTRATION_EXPIRIES_IN,
+  JWT_PROCESS_REGISTRATION_SECRET_KEY,
+  JWT_REFRESH_EXPIRES_IN,
+  JWT_REFRESH_SECRET_KEY,
+  SERVER_URI,
+} from '@/config/env';
 import sendingEmail from '@/services/email/emailSender';
 
 export const existUserByEmail = async <T>(
@@ -41,8 +56,8 @@ export const processUserRegistration = async (userData: UserSchema) => {
       password: hashedPassword,
       profilePicture: userData.profilePicture,
     },
-    JWT_ACCESS_SECRET_KEY as string,
-    JWT_ACCESS_EXPIRES_IN
+    JWT_PROCESS_REGISTRATION_SECRET_KEY as string,
+    JWT_PROCESS_REGISTRATION_EXPIRIES_IN
   );
   if (!token) {
     throw BadRequestError('Failed to generate token for user registration');
@@ -66,11 +81,46 @@ export const processUserRegistration = async (userData: UserSchema) => {
 
   return {
     message: `User registered successfully. Please check your email ${userData.email} for verification.`,
+    token,
   };
 };
 
-export const registerUser = async (token: TokenInput) => {
-  console.log('Registering user with data:', token);
+export const registerUser = async (token: string) => {
+  const decode = jwt.verify(token, JWT_PROCESS_REGISTRATION_SECRET_KEY) as UserSchema;
+
+  if (!decode) {
+    throw NonAuthoritativeInformation('Non Authoritative Information');
+  }
+
+  await existUserByEmail(UserModel, decode.email as string);
+
+  const user = await UserModel.create(decode);
+
+  const data = {
+    user: {
+      _id: user._id as Types.ObjectId,
+    },
+  };
+
+  const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);
+  if (!accessToken) {
+    throw UnauthorizedError('Access token creation failed');
+  }
+
+  const refreshToken = generateToken(
+    data,
+    JWT_REFRESH_SECRET_KEY as string,
+    JWT_REFRESH_EXPIRES_IN
+  );
+  if (!refreshToken) {
+    throw UnauthorizedError('Refresh token creation failed');
+  }
+
+  return {
+    data,
+    accessToken,
+    refreshToken,
+  };
 };
 
 export const getUsers = async (query: Record<string, any>, options: any) => {

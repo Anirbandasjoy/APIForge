@@ -34,4 +34,9 @@ export const UnprocessableEntityError = (message = 'Unprocessable Entity') =>
 export const ServiceUnavailableError = (message = 'Service Unavailable') =>
   new ApiError(StatusCodes.SERVICE_UNAVAILABLE, message);
 
+// export const NON_AUTHORITATIVE_INFORMATION
+
+export const NonAuthoritativeInformation = (message = 'Non Authoritative Information') =>
+  new ApiError(StatusCodes.NON_AUTHORITATIVE_INFORMATION, message);
+
 export default ApiError;

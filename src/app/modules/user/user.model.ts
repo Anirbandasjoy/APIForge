@@ -1,8 +1,8 @@
 import { Schema, model } from 'mongoose';
-import { IUser } from './user.interface';
 import { hashPassword } from '@/utils/hash';
+import { UserSchema } from './user.schema';
 
-const userSchema = new Schema<IUser>(
+const userSchema = new Schema<UserSchema>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -20,6 +20,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-const UserModel = model<IUser>('User', userSchema);
+const UserModel = model<UserSchema>('User', userSchema);
 
 export default UserModel;
