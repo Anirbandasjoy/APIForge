@@ -1,4 +1,3 @@
-// jsonwebtoken@9 is ESM-only and includes types
 import jwt from 'jsonwebtoken';
 
 export const generateToken = (
