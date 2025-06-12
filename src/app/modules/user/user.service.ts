@@ -8,7 +8,7 @@ import {
   NonAuthoritativeInformation,
   UnauthorizedError,
 } from '@/app/errors/apiError';
-import { generateToken } from '@/utils/token/generateToken';
+import { generateToken } from '@/utils/token/token';
 import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
@@ -22,6 +22,8 @@ import {
   SERVER_URI,
 } from '@/config/env';
 import sendingEmail from '@/services/email/emailSender';
+import { IDeviceInfo } from '../session/session.model';
+import { checkAndCreateSession } from '../session/session.service';
 
 export const existUserByEmail = async <T>(
   model: any,
@@ -85,7 +87,7 @@ export const processUserRegistration = async (userData: UserSchema) => {
   };
 };
 
-export const registerUser = async (token: string) => {
+export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   const decode = jwt.verify(token, JWT_PROCESS_REGISTRATION_SECRET_KEY) as UserSchema;
 
   if (!decode) {
@@ -96,10 +98,17 @@ export const registerUser = async (token: string) => {
 
   const user = await UserModel.create(decode);
 
+  const { sessionId, warning } = await checkAndCreateSession(user._id, deviceInfo);
+
+  if (warning) {
+    throw new Error(warning);
+  }
+
   const data = {
     user: {
       _id: user._id as Types.ObjectId,
     },
+    sessionId,
   };
 
   const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);

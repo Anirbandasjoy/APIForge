@@ -1,4 +1,6 @@
-import jwt from 'jsonwebtoken';
+import { UnauthorizedError } from '@/app/errors/apiError';
+import { JWT_ACCESS_SECRET_KEY } from '@/config/env';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export const generateToken = (
   data: Record<string, any>,
@@ -20,3 +22,12 @@ export const generateToken = (
     throw error;
   }
 };
+export function verifyToken(token: string): JwtPayload {
+  const decoded = jwt.verify(token, JWT_ACCESS_SECRET_KEY as string);
+
+  if (typeof decoded === 'string') {
+    throw UnauthorizedError('Invalid token payload');
+  }
+
+  return decoded as JwtPayload;
+}

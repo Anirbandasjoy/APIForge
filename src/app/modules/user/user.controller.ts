@@ -5,6 +5,8 @@ import { StatusCodes } from 'http-status-codes';
 
 import { BadRequestError } from '@/app/errors/apiError';
 import { generateCookie } from '@/utils/cookie/cookie';
+import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
+import useragent from 'useragent';
 
 export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   const { message, token } = await processUserRegistration(req.body);
@@ -16,18 +18,33 @@ export const processUserRegistrationHandler = catchAsync(async (req, res) => {
 });
 
 export const registerUserHandler = catchAsync(async (req, res) => {
-  const { data, accessToken, refreshToken } = await registerUser(req.body.token);
+  const agent = useragent.parse(req.headers['user-agent']);
+  const deviceInfo = {
+    browser: agent.toAgent(),
+    os: agent.os.toString(),
+    ip: req.ip || 'unknown ip',
+  };
+
+  const { data, accessToken, refreshToken } = await registerUser(req.body.token, deviceInfo);
+
+  if (typeof expiresRefreshTokenInMs !== 'number') {
+    throw new Error('Invalid JWT_REFRESH_EXPIRES_IN format');
+  }
+  if (typeof expiresAccessTokenInMs !== 'number') {
+    throw new Error('Invalid JWT_ACCESS_EXPIRES_IN format');
+  }
+
   generateCookie({
     res,
     token: accessToken,
     tokenName: 'accessToken',
-    maxAge: 15 * 60 * 1000,
+    maxAge: expiresAccessTokenInMs,
   });
   generateCookie({
     res,
     token: refreshToken,
     tokenName: 'refreshToken',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: expiresRefreshTokenInMs,
   });
 
   sendSuccessResponse(res, {

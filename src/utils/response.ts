@@ -2,7 +2,7 @@ import { Response } from 'express';
 
 interface IApiResponse<T> {
   success: boolean;
-  statusCode: number;
+  statusCode?: number;
   message: string;
   data?: T;
   error?: any;
