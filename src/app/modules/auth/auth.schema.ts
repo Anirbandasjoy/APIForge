@@ -9,4 +9,11 @@ export const loginSchema = z.object({
   }),
 });
 
+export const cookieRefreshToken = z.object({
+  cookies: z.object({
+    refreshToken: z.string().nonempty('Refresh token is required'),
+  }),
+});
+
+export type CookieRefreshToken = z.infer<typeof cookieRefreshToken>['cookies'];
 export type loginSchema = z.infer<typeof loginSchema>['body'];

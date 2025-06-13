@@ -1,6 +1,6 @@
 import catchAsync from '@/utils/catchAsync';
 import { sendSuccessResponse } from '@/utils/response';
-import { loginUser } from './auth.service';
+import { loginUser, refreshToAccessTokenGenerator } from './auth.service';
 import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 
 import useragent from 'useragent';
@@ -52,7 +52,7 @@ export const logOutHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const logOutAllDevices = catchAsync(async (req: any, res) => {
+export const logOutAllDevices = catchAsync(async (req, res) => {
   const userId = req.user._id;
 
   await SessionModel.deleteMany({ userId });
@@ -62,5 +62,23 @@ export const logOutAllDevices = catchAsync(async (req: any, res) => {
 
   sendSuccessResponse(res, {
     message: 'Logged out from all devices successfully',
+  });
+});
+
+export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  const { accessToken } = await refreshToAccessTokenGenerator(refreshToken);
+
+  if (typeof expiresAccessTokenInMs !== 'number') {
+    throw new Error('Invalid JWT_ACCESS_EXPIRES_IN format');
+  }
+  generateCookie({
+    res,
+    token: accessToken,
+    tokenName: 'accessToken',
+    maxAge: expiresAccessTokenInMs,
+  });
+  sendSuccessResponse(res, {
+    message: 'New access token is Generated',
   });
 });

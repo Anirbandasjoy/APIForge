@@ -3,7 +3,7 @@ import UserModel from '../user/user.model';
 import { loginSchema } from './auth.schema';
 import { comparePassword } from '@/utils/hash';
 import { Types } from 'mongoose';
-import { generateToken } from '@/utils/token/token';
+import { generateToken, verifyRefreshToken } from '@/utils/token/token';
 import {
   JWT_ACCESS_EXPIRES_IN,
   JWT_ACCESS_SECRET_KEY,
@@ -44,4 +44,16 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
   if (!refreshToken) throw UnauthorizedError('Refresh token creation failed');
 
   return { accessToken, refreshToken, user };
+};
+
+export const refreshToAccessTokenGenerator = async (token: string) => {
+  const { decodedToken } = verifyRefreshToken(token);
+
+  const data = {
+    user: decodedToken.user,
+    sessionId: decodedToken.sessionId,
+  };
+  const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);
+  if (!accessToken) throw UnauthorizedError('Access token creation failed');
+  return { accessToken };
 };

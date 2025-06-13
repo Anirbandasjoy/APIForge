@@ -1,5 +1,5 @@
-import { UnauthorizedError } from '@/app/errors/apiError';
-import { JWT_ACCESS_SECRET_KEY } from '@/config/env';
+import { BadRequestError, UnauthorizedError } from '@/app/errors/apiError';
+import { JWT_ACCESS_SECRET_KEY, JWT_REFRESH_SECRET_KEY } from '@/config/env';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export const generateToken = (
@@ -22,6 +22,7 @@ export const generateToken = (
     throw error;
   }
 };
+
 export function verifyToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, JWT_ACCESS_SECRET_KEY as string);
 
@@ -30,4 +31,12 @@ export function verifyToken(token: string): JwtPayload {
   }
 
   return decoded as JwtPayload;
+}
+
+export function verifyRefreshToken(token: string) {
+  const decodedToken = jwt.verify(token, JWT_REFRESH_SECRET_KEY as string);
+  if (typeof decodedToken !== 'object' || !(decodedToken as any).user) {
+    throw BadRequestError('Invalid refresh token. Please loginIn');
+  }
+  return { decodedToken };
 }
