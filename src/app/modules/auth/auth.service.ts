@@ -20,7 +20,10 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
   const matchPassword = comparePassword(loginInfo.password, user.password);
   if (!matchPassword) throw NotFoundError('Invalid credentials');
 
-  const { sessionId, warning } = await checkAndCreateSession(user._id, deviceInfo);
+  const { sessionId, warning } = await checkAndCreateSession(
+    user._id as Types.ObjectId,
+    deviceInfo
+  );
 
   if (warning) {
     throw new Error(warning);

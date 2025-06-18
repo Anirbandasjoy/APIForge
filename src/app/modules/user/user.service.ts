@@ -1,4 +1,3 @@
-import { getDocuments } from '@/app/db/mongoose.helpers';
 import UserModel from './user.model';
 import { UserSchema } from './user.schema';
 import { hashPassword } from '@/utils/hash';
@@ -98,7 +97,10 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
 
   const user = await UserModel.create(decode);
 
-  const { sessionId, warning } = await checkAndCreateSession(user._id, deviceInfo);
+  const { sessionId, warning } = await checkAndCreateSession(
+    user._id as Types.ObjectId,
+    deviceInfo
+  );
 
   if (warning) {
     throw new Error(warning);
@@ -130,8 +132,4 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
     accessToken,
     refreshToken,
   };
-};
-
-export const getUsers = async (query: Record<string, any>, options: any) => {
-  return await getDocuments(UserModel, query, options);
 };

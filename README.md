@@ -10,8 +10,8 @@ This is a scalable and production-ready **Node.js + TypeScript** backend API pro
 src/
 │
 ├── app/                         # App-level configs & helpers
-│   └── db/
-│       └── mongoose.helpers.ts  # Database connection & helpers
+│   └── query/
+│       └── qb.ts
 │
 ├── config/                      # Environment & global config files
 │   ├── db.ts

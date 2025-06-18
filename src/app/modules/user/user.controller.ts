@@ -1,12 +1,13 @@
 import catchAsync from '@/utils/catchAsync';
-import { getUsers, processUserRegistration, registerUser } from './user.service';
+import { processUserRegistration, registerUser } from './user.service';
 import { sendSuccessResponse } from '@/utils/response';
 import { StatusCodes } from 'http-status-codes';
 
-import { BadRequestError } from '@/app/errors/apiError';
 import { generateCookie } from '@/utils/cookie/cookie';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import useragent from 'useragent';
+import { qb } from '@/app/query/qb';
+import UserModel, { IUser } from './user.model';
 
 export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   const { message, token } = await processUserRegistration(req.body);
@@ -55,17 +56,16 @@ export const registerUserHandler = catchAsync(async (req, res) => {
 });
 
 export const getUsersHandler = catchAsync(async (req, res) => {
-  const users = await getUsers(req.query as Record<string, any>, {
-    select: '-password',
-  });
-
-  if (!users || users.data.length === 0) {
-    throw BadRequestError('No users found');
-  }
+  const { meta, data } = await qb<IUser>(UserModel)
+    .select('-password')
+    .filter({ role: req.query.role })
+    .search(req.query.search, ['name', 'email'])
+    .sort('-createdAt')
+    .exec();
 
   sendSuccessResponse(res, {
     statusCode: StatusCodes.OK,
     message: 'Users retrieved successfully',
-    data: users,
+    data: { meta, data },
   });
 });

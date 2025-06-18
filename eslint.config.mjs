@@ -5,6 +5,7 @@ import pluginPrettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import { defineConfig } from 'eslint/config';
 import unusedImports from 'eslint-plugin-unused-imports';
+
 export default defineConfig([
   {
     ignores: ['node_modules/', 'dist/', 'build/'],
@@ -22,8 +23,6 @@ export default defineConfig([
     },
     rules: {
       ...prettierConfig.rules,
-      ...pluginPrettier.configs.recommended.rules,
-      'prettier/prettier': 'error',
       'no-var': 'error',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
@@ -40,6 +39,7 @@ export default defineConfig([
     },
   },
 
+  /* ---------- TypeScript files ---------- */
   {
     files: ['**/*.{ts,tsx,cts,mts}'],
     languageOptions: {
@@ -58,15 +58,12 @@ export default defineConfig([
     rules: {
       ...tseslint.configs.recommended.rules,
       ...prettierConfig.rules,
-      ...pluginPrettier.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'prefer-const': 'off',
       'no-undef': 'off',
-      'prettier/prettier': 'error',
       'no-var': 'error',
-      'prettier/prettier': 'error',
       'unused-imports/no-unused-vars': [
         'warn',
         {

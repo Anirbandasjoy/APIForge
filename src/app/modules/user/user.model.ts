@@ -1,8 +1,10 @@
-import { Schema, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import { hashPassword } from '@/utils/hash';
 import { UserSchema } from './user.schema';
 
-const userSchema = new Schema<UserSchema>(
+export interface IUser extends Document, UserSchema {}
+
+const userSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -20,6 +22,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-const UserModel = model<UserSchema>('User', userSchema);
+const UserModel = model<IUser>('User', userSchema);
 
 export default UserModel;
