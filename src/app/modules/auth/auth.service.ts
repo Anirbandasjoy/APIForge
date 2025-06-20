@@ -26,10 +26,38 @@ import sendingEmail from '@/services/email/emailSender';
 export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   const user = await UserModel.findOne({ email: loginInfo.email });
   if (!user) throw NotFoundError('User not registered');
+  if (!user.isActive) throw UnauthorizedError('User account is inactive');
+
+  if (user.twoFactor.isEnabled) {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const expireAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    user.twoFactor.code = code;
+    user.twoFactor.expiresAt = expireAt;
+    await user.save();
+
+    const emailData = {
+      to: user.email,
+      subject: 'Two-Factor Authentication Code',
+      html: ` <p>2FA Code</p>
+          <p>Your 2FA code is: ${code}</p>`,
+    };
+
+    try {
+      await sendingEmail(emailData);
+    } catch (error) {
+      const err = new Error('Failed to send 2FA code via email');
+      // Optionally attach the original error for debugging
+      (err as any).cause = error;
+      throw err;
+    }
+
+    throw UnauthorizedError('Two-factor authentication is enabled. Please verify your code.');
+  }
 
   const matchPassword = await comparePassword(loginInfo.password, user.password);
   if (!matchPassword) throw NotFoundError('Invalid credentials');
-  console.log({ matchPassword, password: loginInfo.password, userPassword: user.password });
+
   const { sessionId, warning } = await checkAndCreateSession(
     user._id as Types.ObjectId,
     deviceInfo
@@ -133,5 +161,35 @@ export const deleteUserAccount = async (userId: Types.ObjectId, password: string
   return {
     message: 'User account deleted successfully',
     cookieOptions,
+  };
+};
+
+export const enabled2FA = async (userId: Types.ObjectId, password: string) => {
+  const user = await UserModel.findById(userId);
+  if (!user) throw NotFoundError('User not found');
+
+  const matchPassword = await comparePassword(password, user.password);
+  if (!matchPassword) throw UnauthorizedError('Invalid credentials');
+
+  user.twoFactor.isEnabled = true;
+  await user.save();
+  return {
+    message: 'Two-factor authentication enabled successfully',
+  };
+};
+
+export const disabled2FA = async (userId: Types.ObjectId, password: string) => {
+  const user = await UserModel.findById(userId);
+  if (!user) throw NotFoundError('User not found');
+
+  const matchPassword = await comparePassword(password, user.password);
+  if (!matchPassword) throw UnauthorizedError('Invalid credentials');
+
+  user.twoFactor.isEnabled = false;
+  user.twoFactor.code = '';
+  user.twoFactor.expiresAt = undefined;
+  await user.save();
+  return {
+    message: 'Two-factor authentication disabled successfully',
   };
 };

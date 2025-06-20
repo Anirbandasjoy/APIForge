@@ -1,3 +1,4 @@
+import { USER_ROLES } from '@/app/constants/userRoles';
 import { z } from 'zod';
 
 export const UserSchema = z.object({
@@ -8,8 +9,13 @@ export const UserSchema = z.object({
     profilePicture: z.string().url({ message: 'Invalid URL for profile picture' }).optional(),
     lastLogin: z.string().nullable().optional(),
     isActive: z.boolean().optional().default(true),
+    twoFactor: z.object({
+      code: z.string().min(6).max(6).optional(),
+      expiresAt: z.date().optional(),
+      isEnabled: z.boolean().default(false),
+    }),
     role: z
-      .enum(['user', 'admin', 'superadmin'], {
+      .enum(Object.values(USER_ROLES) as [string, ...string[]], {
         required_error: 'Role is required',
         invalid_type_error: 'Role must be one of user, admin, or superadmin',
       })

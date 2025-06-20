@@ -13,6 +13,11 @@ const userSchema = new Schema<IUser>(
     lastLogin: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
     role: { type: String, enum: ['user', 'admin', 'superadmin'], default: 'user' },
+    twoFactor: {
+      code: { type: String, default: null },
+      expiresAt: { type: Date, default: null },
+      isEnabled: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );

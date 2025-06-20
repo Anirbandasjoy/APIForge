@@ -1,14 +1,16 @@
 import UserModel from '@/app/modules/user/user.model';
 import dbConnection from '@/config/db';
-import { exists } from '@/services/existCheckService';
 import { hashPassword } from '@/utils/hash';
 import { superAdminCreateDetail } from './superAdminCreateDetail';
-import { createDocument } from '@/app/db/mongoose.helpers';
+import { existUserByEmail } from '@/app/modules/user/user.service';
 
 async function seedSuperAdmin() {
   try {
     await dbConnection();
-    const isExistingSuperAdmin = await exists(UserModel, { email: superAdminCreateDetail.email });
+    const isExistingSuperAdmin = await existUserByEmail(
+      UserModel,
+      superAdminCreateDetail.email as string
+    );
 
     if (isExistingSuperAdmin) {
       console.log('Super Admin already exists. Skipping seed.');
@@ -28,7 +30,11 @@ async function seedSuperAdmin() {
       role: 'superadmin',
     };
 
-    const superAdmin = await createDocument(UserModel, userData);
+    const superAdmin = await UserModel.create(userData);
+    if (!superAdmin) {
+      console.error('Failed to create Super Admin. Please check the user data.');
+      return;
+    }
 
     console.log('Super Admin seeded successfully', superAdmin);
   } catch (error) {

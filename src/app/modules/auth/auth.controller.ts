@@ -2,6 +2,8 @@ import catchAsync from '@/utils/catchAsync';
 import { sendSuccessResponse } from '@/utils/response';
 import {
   deleteUserAccount,
+  disabled2FA,
+  enabled2FA,
   forgotPassword,
   loginUser,
   refreshToAccessTokenGenerator,
@@ -117,6 +119,22 @@ export const userAccountDeleteHandler = catchAsync(async (req, res) => {
   const { message, cookieOptions } = await deleteUserAccount(userId, req.body.password);
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
+  sendSuccessResponse(res, {
+    message,
+  });
+});
+
+export const enabled2FAHandler = catchAsync(async (req, res) => {
+  const userId = new Types.ObjectId(req.user._id);
+  const { message } = await enabled2FA(userId, req.body.password);
+  sendSuccessResponse(res, {
+    message,
+  });
+});
+
+export const disable2FAHandler = catchAsync(async (req, res) => {
+  const userId = new Types.ObjectId(req.user._id);
+  const { message } = await disabled2FA(userId, req.body.password);
   sendSuccessResponse(res, {
     message,
   });
