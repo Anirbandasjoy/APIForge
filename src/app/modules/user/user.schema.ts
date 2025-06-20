@@ -7,6 +7,7 @@ export const UserSchema = z.object({
     password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
     profilePicture: z.string().url({ message: 'Invalid URL for profile picture' }).optional(),
     lastLogin: z.string().nullable().optional(),
+    isActive: z.boolean().optional().default(true),
     role: z
       .enum(['user', 'admin', 'superadmin'], {
         required_error: 'Role is required',
@@ -30,3 +31,7 @@ export const tokenSchema = z.object({
 
 export type UserSchema = z.infer<typeof UserSchema>['body'];
 export type TokenInput = z.infer<typeof tokenSchema>['body'];
+
+export const UserUpdateSchema = UserSchema.partial().extend({
+  body: UserSchema.shape.body.partial(),
+});

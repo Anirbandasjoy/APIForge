@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from '@/app/errors/apiError';
 
-export const existById = async <T>(
+export const findById = async <T>(
   model: any,
   id: string,
   options: Record<string, any> = {}
@@ -21,7 +21,7 @@ export const existById = async <T>(
   }
 };
 
-export const existByEmail = async <T>(
+export const findByEmail = async <T>(
   model: any,
   email: string,
   options: Record<string, any> = {}

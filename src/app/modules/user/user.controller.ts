@@ -8,7 +8,9 @@ import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/ex
 import useragent from 'useragent';
 import { qb } from '@/app/libs/qb';
 import UserModel, { IUser } from './user.model';
-import { UpdateBuilder } from '@/app/libs/updateBuilder';
+import { ub } from '@/app/libs/updateBuilder';
+import { findById } from '@/services/existCheckService';
+import { BadRequestError } from '@/app/errors/apiError';
 
 export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   const { message, token } = await processUserRegistration(req.body);
@@ -72,13 +74,45 @@ export const getUsersHandler = catchAsync(async (req, res) => {
 });
 
 export const userInfoUpdateHandler = catchAsync(async (req, res) => {
-  const userUpdate = new UpdateBuilder<IUser>(UserModel).allow('name', 'profilePicture');
-
-  const { data: user } = await userUpdate.updateById(req.params.id, req.body);
-
+  console.log('Updating user id:', req.params.id);
+  console.log('Payload:', req.body);
+  const userUpdater = ub<IUser>(UserModel, 'name', 'profilePicture');
+  const { data: user } = await userUpdater.updateById(req.params.id, req.body);
   sendSuccessResponse(res, {
     statusCode: StatusCodes.OK,
     message: 'User updated successfully',
+    data: user,
+  });
+});
+
+export const userDeleteHandler = catchAsync(async (req, res) => {
+  const check = await findById(UserModel, req.params.id);
+  if (
+    typeof check === 'object' &&
+    check !== null &&
+    'isActive' in check &&
+    (check as { isActive: boolean }).isActive === false
+  ) {
+    throw BadRequestError('User is already deleted');
+  }
+  const userUpdate = ub<IUser>(UserModel, 'isActive');
+  const { data: user } = await userUpdate.updateById(req.params.id, { isActive: false });
+  sendSuccessResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: 'User deleted successfully',
+    data: user,
+  });
+});
+
+export const userInfoHandler = catchAsync(async (req, res) => {
+  const user = await UserModel.findById(req.params.id).select('-password -createdAt -updatedAt');
+  if (!user) {
+    res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
+    return;
+  }
+  sendSuccessResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: 'User retrieved successfully',
     data: user,
   });
 });

@@ -7,10 +7,13 @@ import {
   UpdateWriteOpResult,
   QueryOptions,
 } from 'mongoose';
+import { BadRequestError, NotFoundError } from '../errors/apiError';
 
-type SafeQueryOptions = Omit<QueryOptions, 'session'> & { session?: ClientSession };
+type SafeQueryOptions = Omit<QueryOptions, 'session'> & {
+  session?: ClientSession;
+};
 
-interface UpdateResult<T> {
+export interface UpdateResult<T> {
   matched: number;
   modified: number;
   data?: T | null;
@@ -21,16 +24,25 @@ export class UpdateBuilder<T extends Document> {
 
   constructor(private readonly model: Model<T>) {}
 
+  /** Allow only specific fields to be updated */
   allow<K extends keyof T>(...fields: K[]) {
     this.whitelist = fields;
     return this;
   }
 
+  /** Filter out non-allowed fields */
   private sanitize(payload: UpdateQuery<T>): UpdateQuery<T> {
     if (!this.whitelist.length) return payload;
-    return Object.fromEntries(
+
+    const safe = Object.fromEntries(
       Object.entries(payload).filter(([k]) => this.whitelist.includes(k as keyof T))
     ) as UpdateQuery<T>;
+
+    if (Object.keys(safe).length === 0) {
+      throw BadRequestError('No valid fields to update');
+    }
+
+    return safe;
   }
 
   /** ---------- updateById ---------- */
@@ -39,12 +51,16 @@ export class UpdateBuilder<T extends Document> {
     payload: UpdateQuery<T>,
     options: SafeQueryOptions = { new: true }
   ): Promise<UpdateResult<T>> {
-    const safePayload = this.sanitize(payload);
-    const doc = await this.model.findByIdAndUpdate(id, safePayload, {
+    if (!id) throw BadRequestError('ID is required for update');
+
+    const doc = await this.model.findByIdAndUpdate(id, this.sanitize(payload), {
       ...options,
       runValidators: true,
     });
-    return { matched: doc ? 1 : 0, modified: doc ? 1 : 0, data: doc };
+
+    if (!doc) throw NotFoundError('Document not found');
+
+    return { matched: 1, modified: 1, data: doc };
   }
 
   /** ---------- updateOne ---------- */
@@ -53,12 +69,14 @@ export class UpdateBuilder<T extends Document> {
     payload: UpdateQuery<T>,
     options: SafeQueryOptions = { new: true }
   ): Promise<UpdateResult<T>> {
-    const safePayload = this.sanitize(payload);
-    const doc = await this.model.findOneAndUpdate(filter, safePayload, {
+    const doc = await this.model.findOneAndUpdate(filter, this.sanitize(payload), {
       ...options,
       runValidators: true,
     });
-    return { matched: doc ? 1 : 0, modified: doc ? 1 : 0, data: doc };
+
+    if (!doc) throw NotFoundError('Document not found');
+
+    return { matched: 1, modified: 1, data: doc };
   }
 
   /** ---------- updateMany ---------- */
@@ -67,10 +85,19 @@ export class UpdateBuilder<T extends Document> {
     payload: UpdateQuery<T>,
     options: SafeQueryOptions = {}
   ): Promise<UpdateWriteOpResult> {
-    const safePayload = this.sanitize(payload);
-    return this.model.updateMany(filter, safePayload, {
+    const result = await this.model.updateMany(filter, this.sanitize(payload), {
       ...options,
       runValidators: true,
     });
+
+    if (result.matchedCount === 0) {
+      throw NotFoundError('No documents matched the filter');
+    }
+
+    return result;
   }
+}
+
+export function ub<Doc extends Document>(model: Model<Doc>, ...allowed: (keyof Doc)[]) {
+  return new UpdateBuilder<Doc>(model).allow(...allowed);
 }
