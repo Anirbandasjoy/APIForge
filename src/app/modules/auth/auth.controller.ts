@@ -1,12 +1,19 @@
 import catchAsync from '@/utils/catchAsync';
 import { sendSuccessResponse } from '@/utils/response';
-import { loginUser, refreshToAccessTokenGenerator } from './auth.service';
+import {
+  deleteUserAccount,
+  forgotPassword,
+  loginUser,
+  refreshToAccessTokenGenerator,
+  resetPassword,
+} from './auth.service';
 import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 
 import useragent from 'useragent';
 import { SessionModel } from '../session/session.model';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import { UnauthorizedError } from '@/app/errors/apiError';
+import { Types } from 'mongoose';
 
 export const loginHandler = catchAsync(async (req, res) => {
   const agent = useragent.parse(req.headers['user-agent']);
@@ -87,5 +94,30 @@ export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) 
   });
   sendSuccessResponse(res, {
     message: 'New access token is Generated',
+  });
+});
+
+export const forgotPasswordHandler = catchAsync(async (req, res) => {
+  const { message, token } = await forgotPassword(req.body.email);
+  sendSuccessResponse(res, {
+    message,
+    data: { token },
+  });
+});
+
+export const resetPasswordHandler = catchAsync(async (req, res) => {
+  const { message } = await resetPassword(req.body.token, req.body.newPassword);
+  sendSuccessResponse(res, {
+    message,
+  });
+});
+
+export const userAccountDeleteHandler = catchAsync(async (req, res) => {
+  const userId = new Types.ObjectId(req.user._id);
+  const { message, cookieOptions } = await deleteUserAccount(userId, req.body.password);
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
+  sendSuccessResponse(res, {
+    message,
   });
 });

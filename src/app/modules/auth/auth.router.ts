@@ -1,10 +1,18 @@
 import { Router } from 'express';
 import validateRequest from '@/app/middlewares/validateRequest';
-import { cookieRefreshToken, loginSchema } from './auth.schema';
 import {
+  cookieRefreshToken,
+  forgotPasswordSchema,
+  loginSchema,
+  resetPasswordSchema,
+} from './auth.schema';
+import {
+  forgotPasswordHandler,
   loginHandler,
   logOutHandler,
   refreshToAccessTokenGeneratorHandler,
+  resetPasswordHandler,
+  userAccountDeleteHandler,
 } from './auth.controller';
 import { loginLimiter } from '@/utils/loginLimiter';
 import { isAuthenticated, isLogOut } from './auth.middleware';
@@ -18,5 +26,20 @@ authRouter.get(
   validateRequest(cookieRefreshToken),
   refreshToAccessTokenGeneratorHandler
 );
+
+authRouter.post(
+  '/forgot-password',
+  loginLimiter,
+  validateRequest(forgotPasswordSchema),
+  forgotPasswordHandler
+);
+authRouter.put(
+  '/reset-password',
+  loginLimiter,
+  validateRequest(resetPasswordSchema),
+  resetPasswordHandler
+);
+
+authRouter.delete('/delete-account', isAuthenticated, userAccountDeleteHandler);
 
 export default authRouter;
