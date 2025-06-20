@@ -1,4 +1,4 @@
-import { NotFoundError, UnauthorizedError } from '@/app/errors/apiError';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/app/errors/apiError';
 import UserModel from '../user/user.model';
 import { loginSchema } from './auth.schema';
 import { comparePassword, hashPassword } from '@/utils/hash';
@@ -28,7 +28,7 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
   if (!user) throw NotFoundError('User not registered');
   if (!user.isActive) throw UnauthorizedError('User account is inactive');
 
-  if (user.twoFactor.isEnabled) {
+  if (user.twoFactor && user.twoFactor.isEnabled) {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     const expireAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -56,7 +56,7 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
   }
 
   const matchPassword = await comparePassword(loginInfo.password, user.password);
-  if (!matchPassword) throw NotFoundError('Invalid credentials');
+  if (!matchPassword) throw BadRequestError('Invalid credentials');
 
   const { sessionId, warning } = await checkAndCreateSession(
     user._id as Types.ObjectId,
@@ -171,7 +171,15 @@ export const enabled2FA = async (userId: Types.ObjectId, password: string) => {
   const matchPassword = await comparePassword(password, user.password);
   if (!matchPassword) throw UnauthorizedError('Invalid credentials');
 
-  user.twoFactor.isEnabled = true;
+  if (!user.twoFactor) {
+    user.twoFactor = {
+      isEnabled: true,
+      code: '',
+      expiresAt: undefined,
+    };
+  } else {
+    user.twoFactor.isEnabled = true;
+  }
   await user.save();
   return {
     message: 'Two-factor authentication enabled successfully',
@@ -185,9 +193,17 @@ export const disabled2FA = async (userId: Types.ObjectId, password: string) => {
   const matchPassword = await comparePassword(password, user.password);
   if (!matchPassword) throw UnauthorizedError('Invalid credentials');
 
-  user.twoFactor.isEnabled = false;
-  user.twoFactor.code = '';
-  user.twoFactor.expiresAt = undefined;
+  if (!user.twoFactor) {
+    user.twoFactor = {
+      isEnabled: false,
+      code: '',
+      expiresAt: undefined,
+    };
+  } else {
+    user.twoFactor.isEnabled = false;
+    user.twoFactor.code = '';
+    user.twoFactor.expiresAt = undefined;
+  }
   await user.save();
   return {
     message: 'Two-factor authentication disabled successfully',

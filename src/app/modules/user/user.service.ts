@@ -1,6 +1,5 @@
 import UserModel from './user.model';
 import { UserSchema } from './user.schema';
-import { hashPassword } from '@/utils/hash';
 import {
   BadRequestError,
   ConflictError,
@@ -23,6 +22,7 @@ import {
 import sendingEmail from '@/services/email/emailSender';
 import { IDeviceInfo } from '../session/session.model';
 import { checkAndCreateSession } from '../session/session.service';
+import { hashPassword } from '@/utils/hash';
 
 export const existUserByEmail = async <T>(
   model: any,
@@ -47,7 +47,7 @@ export const existUserByEmail = async <T>(
 };
 
 export const processUserRegistration = async (userData: UserSchema) => {
-  const hashedPassword = await hashPassword(userData.password as string);
+  const hashedPassword = await hashPassword(userData.password);
   await existUserByEmail(UserModel, userData.email as string);
 
   const token = generateToken(
@@ -96,6 +96,10 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   await existUserByEmail(UserModel, decode.email as string);
 
   const user = await UserModel.create(decode);
+
+  if (!user) {
+    throw BadRequestError('User registration failed');
+  }
 
   const { sessionId, warning } = await checkAndCreateSession(
     user._id as Types.ObjectId,
