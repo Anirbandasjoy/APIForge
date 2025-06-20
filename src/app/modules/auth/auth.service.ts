@@ -106,9 +106,8 @@ export const forgotPassword = async (email: string) => {
 };
 
 export const resetPassword = async (token: string, newPassword: string) => {
-  console.log(token, newPassword);
   const decoded = forgotPasswordTokenVerifier(token);
-  console.log({ decoded });
+
   if (!decoded) throw UnauthorizedError('Invalid or expired token');
   const filter = { email: decoded.email };
   const update = { password: await hashPassword(newPassword) };
