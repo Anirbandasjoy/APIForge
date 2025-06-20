@@ -9,6 +9,7 @@ import {
   verifyRefreshToken,
 } from '@/utils/token/token';
 import {
+  CLIENT_URI,
   JWT_ACCESS_EXPIRES_IN,
   JWT_ACCESS_SECRET_KEY,
   JWT_PASSWORD_FORGOT_PASSWORD_EXPIRES_IN,
@@ -19,6 +20,8 @@ import {
 import { checkAndCreateSession } from '../session/session.service';
 import { IDeviceInfo, SessionModel } from '../session/session.model';
 import { CookieOptions } from 'express';
+import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
+import sendingEmail from '@/services/email/emailSender';
 
 export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   const user = await UserModel.findOne({ email: loginInfo.email });
@@ -79,19 +82,19 @@ export const forgotPassword = async (email: string) => {
   );
   if (!token) throw UnauthorizedError('Token creation failed');
 
-  // const html = loadEmailTemplate('resetPassword.html', {
-  //   user_name: user.name,
-  //   reset_link: CLIENT_URI + '/reset-password?token=' + token,
-  // });
+  const html = loadEmailTemplate('resetPassword.html', {
+    user_name: user.name,
+    reset_link: CLIENT_URI + '/reset-password?token=' + token,
+  });
 
-  // const emailData = {
-  //   to: email,
-  //   subject: 'Password Reset Request',
-  //   html,
-  // };
+  const emailData = {
+    to: email,
+    subject: 'Password Reset Request',
+    html,
+  };
 
   try {
-    // await sendingEmail(emailData);
+    await sendingEmail(emailData);
   } catch (error) {
     throw error;
   }
