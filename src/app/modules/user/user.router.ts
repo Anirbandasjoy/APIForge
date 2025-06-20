@@ -8,6 +8,8 @@ import {
   registerUserHandler,
 } from './user.controller';
 import { tokenSchema, UserSchema } from './user.schema';
+import { hasRole, isAuthenticated } from '../auth/auth.middleware';
+import { USER_ROLES } from '@/app/constants/userRoles';
 
 const userRouter = Router();
 
@@ -17,6 +19,11 @@ userRouter.post(
   processUserRegistrationHandler
 );
 userRouter.post('/register', validateRequest(tokenSchema), registerUserHandler);
-userRouter.get('/', getUsersHandler);
+userRouter.get(
+  '/',
+  isAuthenticated,
+  hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+  getUsersHandler
+);
 
 export default userRouter;

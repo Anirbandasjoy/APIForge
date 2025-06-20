@@ -4,7 +4,6 @@ import UserModel from '../user/user.model';
 import { UserRole } from '../../constants/userRoles';
 import { verifyToken } from '@/utils/token/token';
 import { SessionModel } from '../session/session.model';
-
 import { getDeviceInfoFromRequest } from '@/app/helper/getDeviceInfoFromRequest';
 
 export const isAuthenticated = async (req: Request, _res: Response, next: NextFunction) => {
@@ -41,6 +40,7 @@ export const isAuthenticated = async (req: Request, _res: Response, next: NextFu
       _id: data.user._id,
       sessionId: data.sessionId,
     };
+    console.log(`User authenticated: ${req.user._id}, Session ID: ${req.user.sessionId}`);
 
     next();
     // eslint-disable-next-line unused-imports/no-unused-vars
@@ -76,19 +76,22 @@ export const isLogOut = async (req: Request, _res: Response, next: NextFunction)
   }
 };
 
-export const hasRole = (...allowedRoles: UserRole[]) => {
-  return async (req: Request, _res: Response, next: NextFunction) => {
+export const hasRole =
+  (...allowedRoles: UserRole[]) =>
+  async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      if (!req.user?._id) throw UnauthorizedError('User not found');
+      if (!req.user?._id) throw UnauthorizedError('User not authenticated');
 
-      const user = await UserModel.findById(req.user._id);
-      if (!user || !allowedRoles.includes(user.role as UserRole)) {
+      const user = await UserModel.findById(req.user._id, { role: 1 }).lean().exec();
+
+      if (!user) throw UnauthorizedError('User disappeared');
+
+      if (allowedRoles.length && !allowedRoles.includes(user.role as UserRole)) {
         throw ForbiddenError('Access Denied');
       }
 
       next();
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(err);
     }
   };
-};

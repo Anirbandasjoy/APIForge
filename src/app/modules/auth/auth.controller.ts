@@ -6,6 +6,7 @@ import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 import useragent from 'useragent';
 import { SessionModel } from '../session/session.model';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
+import { UnauthorizedError } from '@/app/errors/apiError';
 
 export const loginHandler = catchAsync(async (req, res) => {
   const agent = useragent.parse(req.headers['user-agent']);
@@ -67,6 +68,12 @@ export const logOutAllDevices = catchAsync(async (req, res) => {
 
 export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+  const exist = req.cookies.accessToken;
+
+  if (exist) {
+    throw UnauthorizedError('You are already logged in');
+  }
+
   const { accessToken } = await refreshToAccessTokenGenerator(refreshToken);
 
   if (typeof expiresAccessTokenInMs !== 'number') {
