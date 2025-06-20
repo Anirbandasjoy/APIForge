@@ -28,6 +28,16 @@ export const forgotPasswordSchema = z.object({
     email: z.string({ required_error: 'Email is required' }).email('Invalid email address'),
   }),
 });
+
+export const passwordSchema = z.object({
+  body: z.object({
+    password: z
+      .string({ required_error: 'password is required' })
+      .min(8, 'password must be at least 8 characters long'),
+  }),
+});
+export type PasswordSchema = z.infer<typeof passwordSchema>['body'];
+
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>['body'];
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>['body'];
 

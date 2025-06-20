@@ -4,9 +4,12 @@ import {
   cookieRefreshToken,
   forgotPasswordSchema,
   loginSchema,
+  passwordSchema,
   resetPasswordSchema,
 } from './auth.schema';
 import {
+  disable2FAHandler,
+  enabled2FAHandler,
   forgotPasswordHandler,
   loginHandler,
   logOutHandler,
@@ -41,5 +44,13 @@ authRouter.put(
 );
 
 authRouter.delete('/delete-account', isAuthenticated, userAccountDeleteHandler);
+
+authRouter.post('/enable-2fa', validateRequest(passwordSchema), isAuthenticated, enabled2FAHandler);
+authRouter.post(
+  '/disable-2fa',
+  validateRequest(passwordSchema),
+  isAuthenticated,
+  disable2FAHandler
+);
 
 export default authRouter;
