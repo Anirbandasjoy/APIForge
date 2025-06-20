@@ -9,6 +9,7 @@ import {
   userDeleteHandler,
   userInfoHandler,
   userInfoUpdateHandler,
+  userPermanentHandler,
 } from './user.controller';
 import { tokenSchema, UserSchema, UserUpdateSchema } from './user.schema';
 import { hasRole, isAuthenticated } from '../auth/auth.middleware';
@@ -40,6 +41,8 @@ userRouter.patch(
 
 userRouter.put(
   '/:id',
+
+  validateRequest(idSchema),
   validateRequest(UserUpdateSchema),
   isAuthenticated,
   hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
@@ -48,9 +51,18 @@ userRouter.put(
 
 userRouter.get(
   '/:id',
+  validateRequest(idSchema),
   isAuthenticated,
   hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
   userInfoHandler
+);
+
+userRouter.delete(
+  '/permanent/:id',
+  validateRequest(idSchema),
+  isAuthenticated,
+  hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+  userPermanentHandler
 );
 
 export default userRouter;

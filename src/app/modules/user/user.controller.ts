@@ -10,7 +10,7 @@ import { qb } from '@/app/libs/qb';
 import UserModel, { IUser } from './user.model';
 import { ub } from '@/app/libs/updateBuilder';
 import { findById } from '@/services/existCheckService';
-import { BadRequestError } from '@/app/errors/apiError';
+import { BadRequestError, NotFoundError } from '@/app/errors/apiError';
 
 export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   const { message, token } = await processUserRegistration(req.body);
@@ -113,6 +113,18 @@ export const userInfoHandler = catchAsync(async (req, res) => {
   sendSuccessResponse(res, {
     statusCode: StatusCodes.OK,
     message: 'User retrieved successfully',
+    data: user,
+  });
+});
+
+export const userPermanentHandler = catchAsync(async (req, res) => {
+  const user = await UserModel.findByIdAndDelete(req.params.id);
+  if (!user) {
+    throw NotFoundError('User not found');
+  }
+  sendSuccessResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: 'User permanently deleted successfully',
     data: user,
   });
 });
