@@ -6,8 +6,9 @@ import { StatusCodes } from 'http-status-codes';
 import { generateCookie } from '@/utils/cookie/cookie';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import useragent from 'useragent';
-import { qb } from '@/app/query/qb';
+import { qb } from '@/app/libs/qb';
 import UserModel, { IUser } from './user.model';
+import { UpdateBuilder } from '@/app/libs/updateBuilder';
 
 export const processUserRegistrationHandler = catchAsync(async (req, res) => {
   const { message, token } = await processUserRegistration(req.body);
@@ -57,7 +58,7 @@ export const registerUserHandler = catchAsync(async (req, res) => {
 
 export const getUsersHandler = catchAsync(async (req, res) => {
   const { meta, data } = await qb<IUser>(UserModel)
-    .select('-password')
+    .select('-password -createdAt -updatedAt')
     .filter({ role: req.query.role })
     .search(req.query.search, ['name', 'email'])
     .sort('-createdAt')
@@ -67,5 +68,17 @@ export const getUsersHandler = catchAsync(async (req, res) => {
     statusCode: StatusCodes.OK,
     message: 'Users retrieved successfully',
     data: { meta, data },
+  });
+});
+
+export const userInfoUpdateHandler = catchAsync(async (req, res) => {
+  const userUpdate = new UpdateBuilder<IUser>(UserModel).allow('name', 'profilePicture');
+
+  const { data: user } = await userUpdate.updateById(req.params.id, req.body);
+
+  sendSuccessResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: 'User updated successfully',
+    data: user,
   });
 });

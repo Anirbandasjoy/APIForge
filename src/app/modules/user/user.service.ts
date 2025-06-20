@@ -12,13 +12,13 @@ import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import {
+  CLIENT_URI,
   JWT_ACCESS_EXPIRES_IN,
   JWT_ACCESS_SECRET_KEY,
   JWT_PROCESS_REGISTRATION_EXPIRIES_IN,
   JWT_PROCESS_REGISTRATION_SECRET_KEY,
   JWT_REFRESH_EXPIRES_IN,
   JWT_REFRESH_SECRET_KEY,
-  SERVER_URI,
 } from '@/config/env';
 import sendingEmail from '@/services/email/emailSender';
 import { IDeviceInfo } from '../session/session.model';
@@ -66,7 +66,7 @@ export const processUserRegistration = async (userData: UserSchema) => {
 
   const html = loadEmailTemplate('verificationEmail.html', {
     user_name: userData.name,
-    verification_link: SERVER_URI + '/user/verify?token=' + token,
+    verification_link: CLIENT_URI + '/user/verify?token=' + token,
   });
 
   const emailData = {
@@ -132,4 +132,8 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
     accessToken,
     refreshToken,
   };
+};
+
+export const updateUserInfo = async (userData: Partial<UserSchema>) => {
+  console.log(userData);
 };
