@@ -1,5 +1,5 @@
-import { USER_ROLES } from '@/app/constants/userRoles';
 import { z } from 'zod';
+import { USER_ROLES } from './user.constant';
 
 export const UserSchema = z.object({
   body: z.object({

@@ -1,10 +1,10 @@
 import { BadRequestError, ForbiddenError, UnauthorizedError } from '@/app/errors/apiError';
 import { Request, Response, NextFunction } from 'express';
 import UserModel from '../user/user.model';
-import { UserRole } from '../../constants/userRoles';
 import { verifyToken } from '@/utils/token/token';
 import { SessionModel } from '../session/session.model';
 import { getDeviceInfoFromRequest } from '@/app/helper/getDeviceInfoFromRequest';
+import { UserRole } from '../user/user.constant';
 
 export const isAuthenticated = async (req: Request, _res: Response, next: NextFunction) => {
   try {

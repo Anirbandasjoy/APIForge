@@ -13,8 +13,8 @@ import {
 } from './user.controller';
 import { tokenSchema, UserSchema, UserUpdateSchema } from './user.schema';
 import { hasRole, isAuthenticated } from '../auth/auth.middleware';
-import { USER_ROLES } from '@/app/constants/userRoles';
 import { idSchema } from '@/app/schema/common.schema';
+import { USER_ROLES } from './user.constant';
 
 const userRouter = Router();
 
