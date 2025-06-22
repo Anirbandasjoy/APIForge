@@ -243,7 +243,7 @@ Moulvibazar Polytechnic Institute, Department of CSE
 
 - 📧 Email: [joy600508@gmail.com](mailto:joy600508@gmail.com)
 - 💻 GitHub: [github.com/Anirbandasjoy](https://github.com/Anirbandasjoy)
-- 🔗 LinkedIn: [linkedin.com/in/anirbandasjoy](https://www.linkedin.com/in/anirbandasjoy404/)
+- 🔗 LinkedIn: [linkedin.com/in/anirbandasjoy404](https://www.linkedin.com/in/anirbandasjoy404)
 - 📘 Facebook: [facebook.com/anirbandasjoy](https://web.facebook.com/Anirbandasjoy)
 
 Feel free to reach out for collaboration, questions, or freelance projects!
