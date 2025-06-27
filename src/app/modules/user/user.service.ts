@@ -19,7 +19,6 @@ import {
   JWT_REFRESH_EXPIRES_IN,
   JWT_REFRESH_SECRET_KEY,
 } from '@/config/env';
-import sendingEmail from '@/services/email/emailSender';
 import { IDeviceInfo } from '../session/session.model';
 import { checkAndCreateSession } from '../session/session.service';
 import { hashPassword } from '@/utils/hash';
@@ -74,8 +73,9 @@ export const processUserRegistration = async (userData: UserSchema) => {
     subject: 'Welcome to Our Service',
     html,
   };
+  console.log(emailData);
   try {
-    await sendingEmail(emailData);
+    // await sendingEmail(emailData);
   } catch (error) {
     throw error;
   }

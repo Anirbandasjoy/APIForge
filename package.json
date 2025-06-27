@@ -33,6 +33,7 @@
     "format": "prettier --write .",
     "fix-all": "eslint . --ext .js,.ts,.tsx --fix && prettier --write .",
     "seed:superadmin": "ts-node -r tsconfig-paths/register src/scripts/seedSuperAdmin.ts",
+    "create-module": "ts-node src/scripts/createModule.ts",
     "clear": "rm -rf dist node_modules yarn.lock"
   },
   "devDependencies": {

@@ -42,6 +42,7 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
       html: ` <p>2FA Code</p>
           <p>Your 2FA code is: ${code}</p>`,
     };
+    console.log(emailData);
 
     try {
       await sendingEmail(emailData);
@@ -120,9 +121,9 @@ export const forgotPassword = async (email: string) => {
     subject: 'Password Reset Request',
     html,
   };
-
+  console.log(emailData);
   try {
-    await sendingEmail(emailData);
+    // await sendingEmail(emailData);
   } catch (error) {
     throw error;
   }
@@ -209,3 +210,5 @@ export const disabled2FA = async (userId: Types.ObjectId, password: string) => {
     message: 'Two-factor authentication disabled successfully',
   };
 };
+
+// send email use queue
