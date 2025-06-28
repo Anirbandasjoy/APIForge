@@ -23,7 +23,7 @@ import { CookieOptions } from 'express';
 import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
 import sendingEmail from '@/services/email/emailSender';
 
-export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
+const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   const user = await UserModel.findOne({ email: loginInfo.email });
   if (!user) throw NotFoundError('User not registered');
   if (!user.isActive) throw UnauthorizedError('User account is inactive');
@@ -88,7 +88,7 @@ export const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo
   return { accessToken, refreshToken, user };
 };
 
-export const refreshToAccessTokenGenerator = async (token: string) => {
+const refreshToAccessTokenGenerator = async (token: string) => {
   const { decodedToken } = verifyRefreshToken(token);
 
   const data = {
@@ -100,7 +100,7 @@ export const refreshToAccessTokenGenerator = async (token: string) => {
   return { accessToken };
 };
 
-export const forgotPassword = async (email: string) => {
+const forgotPassword = async (email: string) => {
   const user = await UserModel.findOne({ email });
   if (!user) throw NotFoundError('User not registered');
 
@@ -134,7 +134,7 @@ export const forgotPassword = async (email: string) => {
   };
 };
 
-export const resetPassword = async (token: string, newPassword: string) => {
+const resetPassword = async (token: string, newPassword: string) => {
   const decoded = forgotPasswordTokenVerifier(token);
 
   if (!decoded) throw UnauthorizedError('Invalid or expired token');
@@ -146,7 +146,7 @@ export const resetPassword = async (token: string, newPassword: string) => {
   return { message: 'Password reset successfully' };
 };
 
-export const deleteUserAccount = async (userId: Types.ObjectId, password: string) => {
+const deleteUserAccount = async (userId: Types.ObjectId, password: string) => {
   const user = await UserModel.findById(userId);
   if (!user) throw NotFoundError('User not registered');
   const matchPassword = await comparePassword(password, user.password);
@@ -165,7 +165,7 @@ export const deleteUserAccount = async (userId: Types.ObjectId, password: string
   };
 };
 
-export const enabled2FA = async (userId: Types.ObjectId, password: string) => {
+const enabled2FA = async (userId: Types.ObjectId, password: string) => {
   const user = await UserModel.findById(userId);
   if (!user) throw NotFoundError('User not found');
 
@@ -187,7 +187,7 @@ export const enabled2FA = async (userId: Types.ObjectId, password: string) => {
   };
 };
 
-export const disabled2FA = async (userId: Types.ObjectId, password: string) => {
+const disabled2FA = async (userId: Types.ObjectId, password: string) => {
   const user = await UserModel.findById(userId);
   if (!user) throw NotFoundError('User not found');
 
@@ -211,4 +211,12 @@ export const disabled2FA = async (userId: Types.ObjectId, password: string) => {
   };
 };
 
-// send email use queue
+export const authService = {
+  loginUser,
+  refreshToAccessTokenGenerator,
+  forgotPassword,
+  resetPassword,
+  deleteUserAccount,
+  enabled2FA,
+  disabled2FA,
+};

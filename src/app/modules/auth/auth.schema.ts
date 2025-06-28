@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const loginSchema = z.object({
+const loginSchema = z.object({
   body: z.object({
     email: z.string({ required_error: 'Email is required' }).email('Invalid email address'),
     password: z
@@ -9,13 +9,13 @@ export const loginSchema = z.object({
   }),
 });
 
-export const cookieRefreshToken = z.object({
+const cookieRefreshToken = z.object({
   cookies: z.object({
     refreshToken: z.string().nonempty('Refresh token is required'),
   }),
 });
 
-export const resetPasswordSchema = z.object({
+const resetPasswordSchema = z.object({
   body: z.object({
     token: z.string().nonempty('Token is required'),
     newPassword: z
@@ -23,13 +23,13 @@ export const resetPasswordSchema = z.object({
       .min(8, 'New password must be at least 8 characters long'),
   }),
 });
-export const forgotPasswordSchema = z.object({
+const forgotPasswordSchema = z.object({
   body: z.object({
     email: z.string({ required_error: 'Email is required' }).email('Invalid email address'),
   }),
 });
 
-export const passwordSchema = z.object({
+const passwordSchema = z.object({
   body: z.object({
     password: z
       .string({ required_error: 'password is required' })
@@ -43,3 +43,11 @@ export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>['body'];
 
 export type CookieRefreshToken = z.infer<typeof cookieRefreshToken>['cookies'];
 export type loginSchema = z.infer<typeof loginSchema>['body'];
+
+export const authSchema = {
+  loginSchema,
+  cookieRefreshToken,
+  resetPasswordSchema,
+  forgotPasswordSchema,
+  passwordSchema,
+};

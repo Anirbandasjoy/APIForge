@@ -1,56 +1,62 @@
 import { Router } from 'express';
 import validateRequest from '@/app/middlewares/validateRequest';
-import {
-  cookieRefreshToken,
-  forgotPasswordSchema,
-  loginSchema,
-  passwordSchema,
-  resetPasswordSchema,
-} from './auth.schema';
-import {
-  disable2FAHandler,
-  enabled2FAHandler,
-  forgotPasswordHandler,
-  loginHandler,
-  logOutHandler,
-  refreshToAccessTokenGeneratorHandler,
-  resetPasswordHandler,
-  userAccountDeleteHandler,
-} from './auth.controller';
 import { loginLimiter } from '@/utils/loginLimiter';
 import { isAuthenticated, isLogOut } from './auth.middleware';
+import { authController } from './auth.controller';
+import { authSchema } from './auth.schema';
+import { defineRoutes } from '@/utils/defineRoutes';
 
 const authRouter: Router = Router();
 
-authRouter.post('/login', loginLimiter, isLogOut, validateRequest(loginSchema), loginHandler);
-authRouter.post('/logout', loginLimiter, isAuthenticated, logOutHandler);
-authRouter.get(
-  '/refresh-token-to-access-token',
-  validateRequest(cookieRefreshToken),
-  refreshToAccessTokenGeneratorHandler
-);
-
-authRouter.post(
-  '/forgot-password',
-  loginLimiter,
-  validateRequest(forgotPasswordSchema),
-  forgotPasswordHandler
-);
-authRouter.put(
-  '/reset-password',
-  loginLimiter,
-  validateRequest(resetPasswordSchema),
-  resetPasswordHandler
-);
-
-authRouter.delete('/delete-account', isAuthenticated, userAccountDeleteHandler);
-
-authRouter.post('/enable-2fa', validateRequest(passwordSchema), isAuthenticated, enabled2FAHandler);
-authRouter.post(
-  '/disable-2fa',
-  validateRequest(passwordSchema),
-  isAuthenticated,
-  disable2FAHandler
-);
+defineRoutes(authRouter, [
+  {
+    method: 'post',
+    path: '/login',
+    middlewares: [loginLimiter, isLogOut, validateRequest(authSchema.loginSchema)],
+    handler: authController.loginHandler,
+  },
+  {
+    method: 'post',
+    path: '/logout',
+    middlewares: [loginLimiter, isAuthenticated],
+    handler: authController.logOutHandler,
+  },
+  {
+    method: 'get',
+    path: '/refresh-token-to-access-token',
+    middlewares: [validateRequest(authSchema.cookieRefreshToken)],
+    handler: authController.refreshToAccessTokenGeneratorHandler,
+  },
+  {
+    method: 'post',
+    path: '/forgot-password',
+    middlewares: [loginLimiter, validateRequest(authSchema.forgotPasswordSchema)],
+    handler: authController.forgotPasswordHandler,
+  },
+  {
+    method: 'put',
+    path: '/reset-password',
+    middlewares: [loginLimiter, validateRequest(authSchema.resetPasswordSchema)],
+    handler: authController.resetPasswordHandler,
+  },
+  {
+    method: 'delete',
+    path: '/delete-account',
+    middlewares: [isAuthenticated],
+    handler: authController.userAccountDeleteHandler,
+  },
+  {
+    method: 'post',
+    path: '/enable-2fa',
+    middlewares: [validateRequest(authSchema.passwordSchema), isAuthenticated],
+    handler: authController.enabled2FAHandler,
+  },
+  {
+    method: 'post',
+    path: '/disable-2fa',
+    middlewares: [validateRequest(authSchema.passwordSchema), isAuthenticated],
+    handler: authController.disable2FAHandler,
+  },
+]);
 
 export default authRouter;

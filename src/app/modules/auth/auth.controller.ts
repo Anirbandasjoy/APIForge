@@ -1,14 +1,6 @@
 import catchAsync from '@/utils/catchAsync';
 import { sendSuccessResponse } from '@/utils/response';
-import {
-  deleteUserAccount,
-  disabled2FA,
-  enabled2FA,
-  forgotPassword,
-  loginUser,
-  refreshToAccessTokenGenerator,
-  resetPassword,
-} from './auth.service';
+
 import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 
 import useragent from 'useragent';
@@ -16,15 +8,16 @@ import { SessionModel } from '../session/session.model';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import { UnauthorizedError } from '@/app/errors/apiError';
 import { Types } from 'mongoose';
+import { authService } from './auth.service';
 
-export const loginHandler = catchAsync(async (req, res) => {
+const loginHandler = catchAsync(async (req, res) => {
   const agent = useragent.parse(req.headers['user-agent']);
   const deviceInfo = {
     browser: agent.toAgent(),
     os: agent.os.toString(),
     ip: req.ip || 'unknown ip',
   };
-  const { accessToken, refreshToken, user } = await loginUser(req.body, deviceInfo);
+  const { accessToken, refreshToken, user } = await authService.loginUser(req.body, deviceInfo);
 
   if (typeof expiresRefreshTokenInMs !== 'number') {
     throw new Error('Invalid JWT_REFRESH_EXPIRES_IN format');
@@ -52,7 +45,7 @@ export const loginHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const logOutHandler = catchAsync(async (req, res) => {
+const logOutHandler = catchAsync(async (req, res) => {
   await SessionModel.findOneAndDelete({ sessionId: req.user?.sessionId });
 
   res.clearCookie('accessToken', cookieOptions);
@@ -62,7 +55,7 @@ export const logOutHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const logOutAllDevices = catchAsync(async (req, res) => {
+const logOutAllDevices = catchAsync(async (req, res) => {
   const userId = req.user._id;
 
   await SessionModel.deleteMany({ userId });
@@ -75,7 +68,7 @@ export const logOutAllDevices = catchAsync(async (req, res) => {
   });
 });
 
-export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) => {
+const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   const exist = req.cookies.accessToken;
 
@@ -83,7 +76,7 @@ export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) 
     throw UnauthorizedError('You are already logged in');
   }
 
-  const { accessToken } = await refreshToAccessTokenGenerator(refreshToken);
+  const { accessToken } = await authService.refreshToAccessTokenGenerator(refreshToken);
 
   if (typeof expiresAccessTokenInMs !== 'number') {
     throw new Error('Invalid JWT_ACCESS_EXPIRES_IN format');
@@ -99,24 +92,24 @@ export const refreshToAccessTokenGeneratorHandler = catchAsync(async (req, res) 
   });
 });
 
-export const forgotPasswordHandler = catchAsync(async (req, res) => {
-  const { message, token } = await forgotPassword(req.body.email);
+const forgotPasswordHandler = catchAsync(async (req, res) => {
+  const { message, token } = await authService.forgotPassword(req.body.email);
   sendSuccessResponse(res, {
     message,
     data: { token },
   });
 });
 
-export const resetPasswordHandler = catchAsync(async (req, res) => {
-  const { message } = await resetPassword(req.body.token, req.body.newPassword);
+const resetPasswordHandler = catchAsync(async (req, res) => {
+  const { message } = await authService.resetPassword(req.body.token, req.body.newPassword);
   sendSuccessResponse(res, {
     message,
   });
 });
 
-export const userAccountDeleteHandler = catchAsync(async (req, res) => {
+const userAccountDeleteHandler = catchAsync(async (req, res) => {
   const userId = new Types.ObjectId(req.user._id);
-  const { message, cookieOptions } = await deleteUserAccount(userId, req.body.password);
+  const { message, cookieOptions } = await authService.deleteUserAccount(userId, req.body.password);
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
   sendSuccessResponse(res, {
@@ -124,18 +117,30 @@ export const userAccountDeleteHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const enabled2FAHandler = catchAsync(async (req, res) => {
+const enabled2FAHandler = catchAsync(async (req, res) => {
   const userId = new Types.ObjectId(req.user._id);
-  const { message } = await enabled2FA(userId, req.body.password);
+  const { message } = await authService.enabled2FA(userId, req.body.password);
   sendSuccessResponse(res, {
     message,
   });
 });
 
-export const disable2FAHandler = catchAsync(async (req, res) => {
+const disable2FAHandler = catchAsync(async (req, res) => {
   const userId = new Types.ObjectId(req.user._id);
-  const { message } = await disabled2FA(userId, req.body.password);
+  const { message } = await authService.disabled2FA(userId, req.body.password);
   sendSuccessResponse(res, {
     message,
   });
 });
+
+export const authController = {
+  loginHandler,
+  logOutHandler,
+  logOutAllDevices,
+  refreshToAccessTokenGeneratorHandler,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+  userAccountDeleteHandler,
+  enabled2FAHandler,
+  disable2FAHandler,
+};
