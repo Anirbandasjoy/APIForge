@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError, UnauthorizedError } from '@/app/errors/apiError';
 import UserModel from '../user/user.model';
-import { loginSchema } from './auth.schema';
+import { loginSchema, verify2FACodeType } from './auth.schema';
 import { comparePassword, hashPassword } from '@/utils/hash';
 import { Types } from 'mongoose';
 import {
@@ -25,6 +25,7 @@ import sendingEmail from '@/services/email/emailSender';
 
 const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   const user = await UserModel.findOne({ email: loginInfo.email });
+  console.log({ user });
   if (!user) throw NotFoundError('User not registered');
   if (!user.isActive) throw UnauthorizedError('User account is inactive');
 
@@ -36,13 +37,16 @@ const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
     user.twoFactor.expiresAt = expireAt;
     await user.save();
 
+    const html = loadEmailTemplate('twoFactorCode.html', {
+      user_name: user.name,
+      code,
+    });
+
     const emailData = {
       to: user.email,
-      subject: 'Two-Factor Authentication Code',
-      html: ` <p>2FA Code</p>
-          <p>Your 2FA code is: ${code}</p>`,
+      subject: 'Your 2FA Verification Code',
+      html,
     };
-    console.log(emailData);
 
     try {
       await sendingEmail(emailData);
@@ -53,10 +57,18 @@ const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
       throw err;
     }
 
-    throw UnauthorizedError('Two-factor authentication is enabled. Please verify your code.');
+    return {
+      requiresTwoFactor: true,
+      message: 'Two-factor authentication is enabled. A code has been sent to your email.',
+      user: {
+        _id: user._id,
+        email: user.email,
+      },
+    };
   }
 
   const matchPassword = await comparePassword(loginInfo.password, user.password);
+  console.log({ matchPassword, plainPassword: loginInfo.password, dbPassword: user.password });
   if (!matchPassword) throw BadRequestError('Invalid credentials');
 
   const { sessionId, warning } = await checkAndCreateSession(
@@ -140,7 +152,7 @@ const resetPassword = async (token: string, newPassword: string) => {
   if (!decoded) throw UnauthorizedError('Invalid or expired token');
   const filter = { email: decoded.email };
   const update = { password: await hashPassword(newPassword) };
-  const option = { new: true };
+  const option = { new: true, runValidators: true };
   const updateUser = await UserModel.findOneAndUpdate(filter, update, option);
   if (!updateUser) throw NotFoundError('User not found or password update failed');
   return { message: 'Password reset successfully' };
@@ -211,6 +223,53 @@ const disabled2FA = async (userId: Types.ObjectId, password: string) => {
   };
 };
 
+const verify2FACode = async (verifyCredential: verify2FACodeType, deviceInfo?: IDeviceInfo) => {
+  const user = await UserModel.findOne({ email: verifyCredential.email });
+  if (!user) {
+    throw NotFoundError('User not registered');
+  }
+  if (user.twoFactor?.code !== verifyCredential.code) {
+    throw BadRequestError('Invalid Code');
+  }
+  if (user.twoFactor.expiresAt == null) {
+    throw BadRequestError('Code expiration not set');
+  }
+  if (new Date() > new Date(user.twoFactor.expiresAt)) {
+    throw BadRequestError('Code has expired');
+  }
+  user.twoFactor.code = '';
+  user.twoFactor.expiresAt = undefined;
+  await user.save();
+
+  const { sessionId, warning } = await checkAndCreateSession(
+    user._id as Types.ObjectId,
+    deviceInfo
+  );
+
+  if (warning) {
+    throw new Error(warning);
+  }
+
+  const data = {
+    user: {
+      _id: user._id as Types.ObjectId,
+    },
+    sessionId,
+  };
+
+  const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);
+  if (!accessToken) throw UnauthorizedError('Access token creation failed');
+
+  const refreshToken = generateToken(
+    data,
+    JWT_REFRESH_SECRET_KEY as string,
+    JWT_REFRESH_EXPIRES_IN
+  );
+  if (!refreshToken) throw UnauthorizedError('Refresh token creation failed');
+
+  return { accessToken, refreshToken, user };
+};
+
 export const authService = {
   loginUser,
   refreshToAccessTokenGenerator,
@@ -219,4 +278,5 @@ export const authService = {
   deleteUserAccount,
   enabled2FA,
   disabled2FA,
+  verify2FACode,
 };

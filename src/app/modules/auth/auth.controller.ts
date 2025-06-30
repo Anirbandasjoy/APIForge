@@ -6,7 +6,7 @@ import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 import useragent from 'useragent';
 import { SessionModel } from '../session/session.model';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
-import { UnauthorizedError } from '@/app/errors/apiError';
+import { NotFoundError, UnauthorizedError } from '@/app/errors/apiError';
 import { Types } from 'mongoose';
 import { authService } from './auth.service';
 
@@ -17,7 +17,17 @@ const loginHandler = catchAsync(async (req, res) => {
     os: agent.os.toString(),
     ip: req.ip || 'unknown ip',
   };
-  const { accessToken, refreshToken, user } = await authService.loginUser(req.body, deviceInfo);
+
+  const loginResult = await authService.loginUser(req.body, deviceInfo);
+
+  if (loginResult.requiresTwoFactor) {
+    sendSuccessResponse(res, {
+      message: loginResult.message,
+      data: loginResult.user,
+    });
+  }
+
+  const { accessToken, refreshToken, user } = loginResult;
 
   if (typeof expiresRefreshTokenInMs !== 'number') {
     throw new Error('Invalid JWT_REFRESH_EXPIRES_IN format');
@@ -26,6 +36,9 @@ const loginHandler = catchAsync(async (req, res) => {
     throw new Error('Invalid JWT_ACCESS_EXPIRES_IN format');
   }
 
+  if (!accessToken || !refreshToken) {
+    throw NotFoundError('Tokens are missing from login result');
+  }
   generateCookie({
     res,
     token: accessToken,
@@ -39,7 +52,6 @@ const loginHandler = catchAsync(async (req, res) => {
     maxAge: expiresRefreshTokenInMs,
   });
   sendSuccessResponse(res, {
-    statusCode: 200,
     message: 'Login successfully',
     data: user,
   });
@@ -47,7 +59,6 @@ const loginHandler = catchAsync(async (req, res) => {
 
 const logOutHandler = catchAsync(async (req, res) => {
   await SessionModel.findOneAndDelete({ sessionId: req.user?.sessionId });
-
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
   sendSuccessResponse(res, {
@@ -57,7 +68,6 @@ const logOutHandler = catchAsync(async (req, res) => {
 
 const logOutAllDevices = catchAsync(async (req, res) => {
   const userId = req.user._id;
-
   await SessionModel.deleteMany({ userId });
 
   res.clearCookie('accessToken', cookieOptions);
@@ -102,6 +112,8 @@ const forgotPasswordHandler = catchAsync(async (req, res) => {
 
 const resetPasswordHandler = catchAsync(async (req, res) => {
   const { message } = await authService.resetPassword(req.body.token, req.body.newPassword);
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
   sendSuccessResponse(res, {
     message,
   });
@@ -133,6 +145,43 @@ const disable2FAHandler = catchAsync(async (req, res) => {
   });
 });
 
+const verify2FAHandler = catchAsync(async (req, res) => {
+  const agent = useragent.parse(req.headers['user-agent']);
+  const deviceInfo = {
+    browser: agent.toAgent(),
+    os: agent.os.toString(),
+    ip: req.ip || 'unknown ip',
+  };
+
+  const { accessToken, refreshToken, user } = await authService.verify2FACode(req.body, deviceInfo);
+  if (typeof expiresRefreshTokenInMs !== 'number') {
+    throw new Error('Invalid JWT_REFRESH_EXPIRES_IN format');
+  }
+  if (typeof expiresAccessTokenInMs !== 'number') {
+    throw new Error('Invalid JWT_ACCESS_EXPIRES_IN format');
+  }
+
+  if (!accessToken || !refreshToken) {
+    throw NotFoundError('Tokens are missing from login result');
+  }
+  generateCookie({
+    res,
+    token: accessToken,
+    tokenName: 'accessToken',
+    maxAge: expiresAccessTokenInMs,
+  });
+  generateCookie({
+    res,
+    token: refreshToken,
+    tokenName: 'refreshToken',
+    maxAge: expiresRefreshTokenInMs,
+  });
+  sendSuccessResponse(res, {
+    message: 'Login successfully',
+    data: user,
+  });
+});
+
 export const authController = {
   loginHandler,
   logOutHandler,
@@ -143,4 +192,5 @@ export const authController = {
   userAccountDeleteHandler,
   enabled2FAHandler,
   disable2FAHandler,
+  verify2FAHandler,
 };

@@ -1,5 +1,4 @@
 import catchAsync from '@/utils/catchAsync';
-import { processUserRegistration, registerUser } from './user.service';
 import { sendSuccessResponse } from '@/utils/response';
 import { StatusCodes } from 'http-status-codes';
 
@@ -11,17 +10,17 @@ import UserModel, { IUser } from './user.model';
 import { ub } from '@/app/libs/updateBuilder';
 import { findById } from '@/services/existCheckService';
 import { BadRequestError, NotFoundError } from '@/app/errors/apiError';
+import { userService } from './user.service';
 
-export const processUserRegistrationHandler = catchAsync(async (req, res) => {
-  const { message, token } = await processUserRegistration(req.body);
+const processUserRegistrationHandler = catchAsync(async (req, res) => {
+  const { message, token } = await userService.processUserRegistration(req.body);
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message,
     data: token,
   });
 });
 
-export const registerUserHandler = catchAsync(async (req, res) => {
+const registerUserHandler = catchAsync(async (req, res) => {
   const agent = useragent.parse(req.headers['user-agent']);
   const deviceInfo = {
     browser: agent.toAgent(),
@@ -29,7 +28,10 @@ export const registerUserHandler = catchAsync(async (req, res) => {
     ip: req.ip || 'unknown ip',
   };
 
-  const { data, accessToken, refreshToken } = await registerUser(req.body.token, deviceInfo);
+  const { data, accessToken, refreshToken } = await userService.registerUser(
+    req.body.token,
+    deviceInfo
+  );
 
   if (typeof expiresRefreshTokenInMs !== 'number') {
     throw new Error('Invalid JWT_REFRESH_EXPIRES_IN format');
@@ -58,7 +60,7 @@ export const registerUserHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const getUsersHandler = catchAsync(async (req, res) => {
+const getUsersHandler = catchAsync(async (req, res) => {
   const { meta, data } = await qb<IUser>(UserModel)
     .select('-password -createdAt -updatedAt')
     .filter({ role: req.query.role })
@@ -67,25 +69,21 @@ export const getUsersHandler = catchAsync(async (req, res) => {
     .exec();
 
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message: 'Users retrieved successfully',
     data: { meta, data },
   });
 });
 
-export const userInfoUpdateHandler = catchAsync(async (req, res) => {
-  console.log('Updating user id:', req.params.id);
-  console.log('Payload:', req.body);
+const userInfoUpdateHandler = catchAsync(async (req, res) => {
   const userUpdater = ub<IUser>(UserModel, 'name', 'profilePicture');
   const { data: user } = await userUpdater.updateById(req.params.id, req.body);
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message: 'User updated successfully',
     data: user,
   });
 });
 
-export const userDeleteHandler = catchAsync(async (req, res) => {
+const userDeleteHandler = catchAsync(async (req, res) => {
   const check = await findById(UserModel, req.params.id);
   if (
     typeof check === 'object' &&
@@ -98,33 +96,40 @@ export const userDeleteHandler = catchAsync(async (req, res) => {
   const userUpdate = ub<IUser>(UserModel, 'isActive');
   const { data: user } = await userUpdate.updateById(req.params.id, { isActive: false });
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message: 'User deleted successfully',
     data: user,
   });
 });
 
-export const userInfoHandler = catchAsync(async (req, res) => {
+const userInfoHandler = catchAsync(async (req, res) => {
   const user = await UserModel.findById(req.params.id).select('-password -createdAt -updatedAt');
   if (!user) {
     res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
     return;
   }
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message: 'User retrieved successfully',
     data: user,
   });
 });
 
-export const userPermanentHandler = catchAsync(async (req, res) => {
+const userPermanentHandler = catchAsync(async (req, res) => {
   const user = await UserModel.findByIdAndDelete(req.params.id);
   if (!user) {
     throw NotFoundError('User not found');
   }
   sendSuccessResponse(res, {
-    statusCode: StatusCodes.OK,
     message: 'User permanently deleted successfully',
     data: user,
   });
 });
+
+export const userController = {
+  processUserRegistrationHandler,
+  registerUserHandler,
+  getUsersHandler,
+  userInfoUpdateHandler,
+  userDeleteHandler,
+  userInfoHandler,
+  userPermanentHandler,
+};

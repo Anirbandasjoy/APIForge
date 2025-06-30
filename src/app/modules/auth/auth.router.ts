@@ -22,6 +22,12 @@ defineRoutes(authRouter, [
     handler: authController.logOutHandler,
   },
   {
+    method: 'post',
+    path: '/logout-all-device',
+    middlewares: [loginLimiter, isAuthenticated],
+    handler: authController.logOutAllDevices,
+  },
+  {
     method: 'get',
     path: '/refresh-token-to-access-token',
     middlewares: [validateRequest(authSchema.cookieRefreshToken)],
@@ -42,20 +48,26 @@ defineRoutes(authRouter, [
   {
     method: 'delete',
     path: '/delete-account',
-    middlewares: [isAuthenticated],
+    middlewares: [loginLimiter, isAuthenticated],
     handler: authController.userAccountDeleteHandler,
   },
   {
     method: 'post',
     path: '/enable-2fa',
-    middlewares: [validateRequest(authSchema.passwordSchema), isAuthenticated],
+    middlewares: [loginLimiter, validateRequest(authSchema.passwordSchema), isAuthenticated],
     handler: authController.enabled2FAHandler,
   },
   {
     method: 'post',
     path: '/disable-2fa',
-    middlewares: [validateRequest(authSchema.passwordSchema), isAuthenticated],
+    middlewares: [loginLimiter, validateRequest(authSchema.passwordSchema), isAuthenticated],
     handler: authController.disable2FAHandler,
+  },
+  {
+    method: 'put',
+    path: '/verify-2fa',
+    middlewares: [validateRequest(authSchema.verifyCodeSchema)],
+    handler: authController.verify2FAHandler,
   },
 ]);
 

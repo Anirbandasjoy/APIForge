@@ -1,21 +1,12 @@
 import { Router } from 'express';
 import validateRequest from '@/app/middlewares/validateRequest';
 
-import {
-  getUsersHandler,
-  processUserRegistrationHandler,
-  registerUserHandler,
-  userDeleteHandler,
-  userInfoHandler,
-  userInfoUpdateHandler,
-  userPermanentHandler,
-} from './user.controller';
-
 import { tokenSchema, UserSchema, UserUpdateSchema } from './user.schema';
 import { idSchema } from '@/app/schema/common.schema';
 import { hasRole, isAuthenticated } from '../auth/auth.middleware';
 import { USER_ROLES } from './user.constant';
 import { defineRoutes } from '@/utils/defineRoutes';
+import { userController } from './user.controller';
 
 const userRouter = Router();
 
@@ -24,19 +15,19 @@ defineRoutes(userRouter, [
     method: 'post',
     path: '/process-registration',
     middlewares: [validateRequest(UserSchema)],
-    handler: processUserRegistrationHandler,
+    handler: userController.processUserRegistrationHandler,
   },
   {
     method: 'post',
     path: '/register',
     middlewares: [validateRequest(tokenSchema)],
-    handler: registerUserHandler,
+    handler: userController.registerUserHandler,
   },
   {
     method: 'get',
     path: '/',
     middlewares: [isAuthenticated, hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN)],
-    handler: getUsersHandler,
+    handler: userController.getUsersHandler,
   },
   {
     method: 'patch',
@@ -46,7 +37,7 @@ defineRoutes(userRouter, [
       isAuthenticated,
       hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
-    handler: userDeleteHandler,
+    handler: userController.userDeleteHandler,
   },
   {
     method: 'put',
@@ -57,7 +48,7 @@ defineRoutes(userRouter, [
       isAuthenticated,
       hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
-    handler: userInfoUpdateHandler,
+    handler: userController.userInfoUpdateHandler,
   },
   {
     method: 'get',
@@ -67,7 +58,7 @@ defineRoutes(userRouter, [
       isAuthenticated,
       hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
-    handler: userInfoHandler,
+    handler: userController.userInfoHandler,
   },
   {
     method: 'delete',
@@ -77,7 +68,7 @@ defineRoutes(userRouter, [
       isAuthenticated,
       hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
-    handler: userPermanentHandler,
+    handler: userController.userPermanentHandler,
   },
 ]);
 

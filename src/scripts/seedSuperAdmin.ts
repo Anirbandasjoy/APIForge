@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import UserModel from '@/app/modules/user/user.model';
 import dbConnection from '@/config/db';
-import { hashPassword } from '@/utils/hash';
 import { superAdminCreateDetail } from './superAdminCreateDetail';
 import dotenv from 'dotenv';
 
@@ -20,12 +19,10 @@ dotenv.config();
       return;
     }
 
-    const hashedPassword = await hashPassword(password);
-
     const superAdmin = await UserModel.create({
       name,
       email,
-      password: hashedPassword,
+      password,
       role: 'superadmin',
     });
 

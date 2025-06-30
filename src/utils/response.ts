@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
 
 interface IApiResponse<T> {
   success: boolean;
@@ -10,7 +11,7 @@ interface IApiResponse<T> {
 
 export const sendSuccessResponse = <T>(
   res: Response,
-  { statusCode = 200, message = 'Success', data }: Omit<IApiResponse<T>, 'success'>
+  { statusCode = StatusCodes.OK, message = 'Success', data }: Omit<IApiResponse<T>, 'success'>
 ) => {
   return res.status(statusCode).json({
     success: true,
@@ -23,7 +24,7 @@ export const sendSuccessResponse = <T>(
 export const sendErrorResponse = (
   res: Response,
   {
-    statusCode = 500,
+    statusCode = StatusCodes.INTERNAL_SERVER_ERROR,
     message = 'Something went wrong',
     error,
   }: {

@@ -21,9 +21,8 @@ import {
 } from '@/config/env';
 import { IDeviceInfo } from '../session/session.model';
 import { checkAndCreateSession } from '../session/session.service';
-import { hashPassword } from '@/utils/hash';
 
-export const existUserByEmail = async <T>(
+const existUserByEmail = async <T>(
   model: any,
   email: string,
   options: Record<string, any> = {}
@@ -45,15 +44,14 @@ export const existUserByEmail = async <T>(
   }
 };
 
-export const processUserRegistration = async (userData: UserSchema) => {
-  const hashedPassword = await hashPassword(userData.password);
+const processUserRegistration = async (userData: UserSchema) => {
   await existUserByEmail(UserModel, userData.email as string);
-
+  console.log({ userPass: userData.password });
   const token = generateToken(
     {
       name: userData.name,
       email: userData.email,
-      password: hashedPassword,
+      password: userData.password,
       profilePicture: userData.profilePicture,
     },
     JWT_PROCESS_REGISTRATION_SECRET_KEY as string,
@@ -86,7 +84,7 @@ export const processUserRegistration = async (userData: UserSchema) => {
   };
 };
 
-export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
+const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   const decode = jwt.verify(token, JWT_PROCESS_REGISTRATION_SECRET_KEY) as UserSchema;
 
   if (!decode) {
@@ -95,7 +93,11 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
 
   await existUserByEmail(UserModel, decode.email as string);
 
-  const user = await UserModel.create(decode);
+  const user = await UserModel.create({
+    name: decode.email,
+    email: decode.email,
+    password: decode.password,
+  });
 
   if (!user) {
     throw BadRequestError('User registration failed');
@@ -138,6 +140,13 @@ export const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   };
 };
 
-export const updateUserInfo = async (userData: Partial<UserSchema>) => {
+const updateUserInfo = async (userData: Partial<UserSchema>) => {
   console.log(userData);
+};
+
+export const userService = {
+  existUserByEmail,
+  processUserRegistration,
+  registerUser,
+  updateUserInfo,
 };

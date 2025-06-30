@@ -40,7 +40,6 @@ export const isAuthenticated = async (req: Request, _res: Response, next: NextFu
       _id: data.user._id,
       sessionId: data.sessionId,
     };
-    console.log(`User authenticated: ${req.user._id}, Session ID: ${req.user.sessionId}`);
 
     next();
     // eslint-disable-next-line unused-imports/no-unused-vars
@@ -56,7 +55,6 @@ export const isLogOut = async (req: Request, _res: Response, next: NextFunction)
     if (!token) return next();
 
     const decoded = verifyToken(token);
-    console.log(decoded);
 
     if (!decoded?.user?._id || !decoded.sessionId) return next();
 
