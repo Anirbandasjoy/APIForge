@@ -83,7 +83,7 @@ const userInfoUpdateHandler = catchAsync(async (req, res) => {
   });
 });
 
-const userDeleteHandler = catchAsync(async (req, res) => {
+const userDeActiveHandler = catchAsync(async (req, res) => {
   const check = await findById(UserModel, req.params.id);
   if (
     typeof check === 'object' &&
@@ -129,7 +129,7 @@ export const userController = {
   registerUserHandler,
   getUsersHandler,
   userInfoUpdateHandler,
-  userDeleteHandler,
+  userDeActiveHandler,
   userInfoHandler,
   userPermanentHandler,
 };

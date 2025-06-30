@@ -37,7 +37,7 @@ defineRoutes(userRouter, [
       isAuthenticated,
       hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
-    handler: userController.userDeleteHandler,
+    handler: userController.userDeActiveHandler,
   },
   {
     method: 'put',
