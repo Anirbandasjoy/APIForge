@@ -46,7 +46,7 @@ const existUserByEmail = async <T>(
 
 const processUserRegistration = async (userData: UserSchema) => {
   await existUserByEmail(UserModel, userData.email as string);
-  console.log({ userPass: userData.password });
+
   const token = generateToken(
     {
       name: userData.name,

@@ -4,7 +4,6 @@ import { StatusCodes } from 'http-status-codes';
 
 import { generateCookie } from '@/utils/cookie/cookie';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
-import useragent from 'useragent';
 import { qb } from '@/app/libs/qb';
 import UserModel, { IUser } from './user.model';
 import { ub } from '@/app/libs/updateBuilder';
@@ -21,12 +20,7 @@ const processUserRegistrationHandler = catchAsync(async (req, res) => {
 });
 
 const registerUserHandler = catchAsync(async (req, res) => {
-  const agent = useragent.parse(req.headers['user-agent']);
-  const deviceInfo = {
-    browser: agent.toAgent(),
-    os: agent.os.toString(),
-    ip: req.ip || 'unknown ip',
-  };
+  const deviceInfo = req.deviceInfo;
 
   const { data, accessToken, refreshToken } = await userService.registerUser(
     req.body.token,

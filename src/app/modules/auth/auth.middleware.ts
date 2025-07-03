@@ -5,8 +5,10 @@ import { verifyToken } from '@/utils/token/token';
 import { SessionModel } from '../session/session.model';
 import { getDeviceInfoFromRequest } from '@/app/helper/getDeviceInfoFromRequest';
 import { UserRole } from '../user/user.constant';
+import { DeviceInfo } from './auth.interface';
+import useragent from 'useragent';
 
-export const isAuthenticated = async (req: Request, _res: Response, next: NextFunction) => {
+const isAuthenticated = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies?.accessToken;
 
@@ -48,7 +50,7 @@ export const isAuthenticated = async (req: Request, _res: Response, next: NextFu
   }
 };
 
-export const isLogOut = async (req: Request, _res: Response, next: NextFunction) => {
+const isLogOut = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     const token = req.cookies?.accessToken;
 
@@ -74,7 +76,7 @@ export const isLogOut = async (req: Request, _res: Response, next: NextFunction)
   }
 };
 
-export const hasRole =
+const hasRole =
   (...allowedRoles: UserRole[]) =>
   async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -93,3 +95,60 @@ export const hasRole =
       next(err);
     }
   };
+
+const getClientIp = (req: Request): string => {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  if (typeof xForwardedFor === 'string' && xForwardedFor.length > 0) {
+    const ips = xForwardedFor.split(',').map((ip) => ip.trim());
+
+    for (const ip of ips) {
+      if (ip && ip.toLowerCase() !== 'unknown') return ip;
+    }
+  }
+
+  return req.socket?.remoteAddress || req.connection?.remoteAddress || '0.0.0.0';
+};
+
+const normalizeIp = (ip: string): string => {
+  if (!ip) return '0.0.0.0';
+
+  if (ip === '::1' || ip === '::ffff:127.0.0.1') return '127.0.0.1';
+
+  if (ip.startsWith('::ffff:')) return ip.substring(7);
+
+  return ip;
+};
+
+const detectDeviceInfo = (req: Request, _res: Response, next: NextFunction): void => {
+  try {
+    const rawUserAgent = req.headers['user-agent'] || '';
+    const agent = useragent.parse(rawUserAgent);
+
+    const ipRaw = getClientIp(req);
+    const ip = normalizeIp(ipRaw);
+
+    const deviceInfo: DeviceInfo = {
+      browser: agent.toAgent() || 'Unknown browser',
+      os: agent.os.toString() || 'Unknown OS',
+      ip,
+    };
+
+    req.deviceInfo = deviceInfo;
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('🛰️ Device Info:', deviceInfo);
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error in detectDeviceInfo middleware:', error);
+    next();
+  }
+};
+
+export const authMiddlewares = {
+  isAuthenticated,
+  isLogOut,
+  hasRole,
+  detectDeviceInfo,
+};

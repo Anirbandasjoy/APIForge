@@ -3,7 +3,6 @@ import { sendSuccessResponse } from '@/utils/response';
 
 import { cookieOptions, generateCookie } from '@/utils/cookie/cookie';
 
-import useragent from 'useragent';
 import { SessionModel } from '../session/session.model';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import { NotFoundError, UnauthorizedError } from '@/app/errors/apiError';
@@ -11,12 +10,7 @@ import { Types } from 'mongoose';
 import { authService } from './auth.service';
 
 const loginHandler = catchAsync(async (req, res) => {
-  const agent = useragent.parse(req.headers['user-agent']);
-  const deviceInfo = {
-    browser: agent.toAgent(),
-    os: agent.os.toString(),
-    ip: req.ip || 'unknown ip',
-  };
+  const deviceInfo = req.deviceInfo;
 
   const loginResult = await authService.loginUser(req.body, deviceInfo);
 
@@ -146,12 +140,7 @@ const disable2FAHandler = catchAsync(async (req, res) => {
 });
 
 const verify2FAHandler = catchAsync(async (req, res) => {
-  const agent = useragent.parse(req.headers['user-agent']);
-  const deviceInfo = {
-    browser: agent.toAgent(),
-    os: agent.os.toString(),
-    ip: req.ip || 'unknown ip',
-  };
+  const deviceInfo = req.deviceInfo;
 
   const { accessToken, refreshToken, user } = await authService.verify2FACode(req.body, deviceInfo);
   if (typeof expiresRefreshTokenInMs !== 'number') {

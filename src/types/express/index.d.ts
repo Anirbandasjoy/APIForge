@@ -1,4 +1,5 @@
 import 'express';
+import { DeviceInfo } from '@/app/modules/auth/auth.interface';
 
 declare global {
   namespace Express {
@@ -7,6 +8,7 @@ declare global {
         _id: string;
         sessionId: string;
       };
+      deviceInfo?: DeviceInfo;
     }
   }
 }

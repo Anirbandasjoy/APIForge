@@ -3,10 +3,10 @@ import validateRequest from '@/app/middlewares/validateRequest';
 
 import { tokenSchema, UserSchema, UserUpdateSchema } from './user.schema';
 import { idSchema } from '@/app/schema/common.schema';
-import { hasRole, isAuthenticated } from '../auth/auth.middleware';
 import { USER_ROLES } from './user.constant';
 import { defineRoutes } from '@/utils/defineRoutes';
 import { userController } from './user.controller';
+import { authMiddlewares } from '../auth/auth.middleware';
 
 const userRouter = Router();
 
@@ -14,7 +14,7 @@ defineRoutes(userRouter, [
   {
     method: 'post',
     path: '/process-registration',
-    middlewares: [validateRequest(UserSchema)],
+    middlewares: [validateRequest(UserSchema), authMiddlewares.detectDeviceInfo],
     handler: userController.processUserRegistrationHandler,
   },
   {
@@ -26,7 +26,10 @@ defineRoutes(userRouter, [
   {
     method: 'get',
     path: '/',
-    middlewares: [isAuthenticated, hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN)],
+    middlewares: [
+      authMiddlewares.isAuthenticated,
+      authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+    ],
     handler: userController.getUsersHandler,
   },
   {
@@ -34,8 +37,8 @@ defineRoutes(userRouter, [
     path: '/:id',
     middlewares: [
       validateRequest(idSchema),
-      isAuthenticated,
-      hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+      authMiddlewares.isAuthenticated,
+      authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
     handler: userController.userDeActiveHandler,
   },
@@ -45,8 +48,8 @@ defineRoutes(userRouter, [
     middlewares: [
       validateRequest(idSchema),
       validateRequest(UserUpdateSchema),
-      isAuthenticated,
-      hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+      authMiddlewares.isAuthenticated,
+      authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
     handler: userController.userInfoUpdateHandler,
   },
@@ -55,8 +58,8 @@ defineRoutes(userRouter, [
     path: '/:id',
     middlewares: [
       validateRequest(idSchema),
-      isAuthenticated,
-      hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+      authMiddlewares.isAuthenticated,
+      authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
     handler: userController.userInfoHandler,
   },
@@ -65,8 +68,8 @@ defineRoutes(userRouter, [
     path: '/permanent/:id',
     middlewares: [
       validateRequest(idSchema),
-      isAuthenticated,
-      hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
+      authMiddlewares.isAuthenticated,
+      authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],
     handler: userController.userPermanentHandler,
   },

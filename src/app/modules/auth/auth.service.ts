@@ -25,7 +25,7 @@ import sendingEmail from '@/services/email/emailSender';
 
 const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   const user = await UserModel.findOne({ email: loginInfo.email });
-  console.log({ user });
+ 
   if (!user) throw NotFoundError('User not registered');
   if (!user.isActive) throw UnauthorizedError('User account is inactive');
 
@@ -68,7 +68,7 @@ const loginUser = async (loginInfo: loginSchema, deviceInfo?: IDeviceInfo) => {
   }
 
   const matchPassword = await comparePassword(loginInfo.password, user.password);
-  console.log({ matchPassword, plainPassword: loginInfo.password, dbPassword: user.password });
+ 
   if (!matchPassword) throw BadRequestError('Invalid credentials');
 
   const { sessionId, warning } = await checkAndCreateSession(
