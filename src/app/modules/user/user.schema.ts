@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { USER_ROLES } from './user.constant';
 
-export const UserSchema = z.object({
+const UserSchema = z.object({
   body: z.object({
     name: z.string({ required_error: 'Name is required' }).trim(),
     email: z.string().email({ message: 'Invalid email address' }).trim(),
@@ -27,7 +27,7 @@ export const UserSchema = z.object({
   }),
 });
 
-export const tokenSchema = z.object({
+const tokenSchema = z.object({
   body: z.object({
     token: z
       .string({ required_error: 'Token is required' })
@@ -42,6 +42,12 @@ export const tokenSchema = z.object({
 export type UserSchema = z.infer<typeof UserSchema>['body'];
 export type TokenInput = z.infer<typeof tokenSchema>['body'];
 
-export const UserUpdateSchema = UserSchema.partial().extend({
+const UserUpdateSchema = UserSchema.partial().extend({
   body: UserSchema.shape.body.partial(),
 });
+
+export const userValidationSchema = {
+  UserSchema,
+  tokenSchema,
+  UserUpdateSchema,
+};

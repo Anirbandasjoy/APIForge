@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import validateRequest from '@/app/middlewares/validateRequest';
 
-import { tokenSchema, UserSchema, UserUpdateSchema } from './user.schema';
 import { idSchema } from '@/app/schema/common.schema';
 import { USER_ROLES } from './user.constant';
 import { defineRoutes } from '@/utils/defineRoutes';
 import { userController } from './user.controller';
 import { authMiddlewares } from '../auth/auth.middleware';
+import { userValidationSchema } from './user.schema';
 
 const userRouter = Router();
 
@@ -14,13 +14,16 @@ defineRoutes(userRouter, [
   {
     method: 'post',
     path: '/process-registration',
-    middlewares: [validateRequest(UserSchema), authMiddlewares.detectDeviceInfo],
+    middlewares: [validateRequest(userValidationSchema.UserSchema)],
     handler: userController.processUserRegistrationHandler,
   },
   {
     method: 'post',
     path: '/register',
-    middlewares: [validateRequest(tokenSchema)],
+    middlewares: [
+      validateRequest(userValidationSchema.tokenSchema),
+      authMiddlewares.detectDeviceInfo,
+    ],
     handler: userController.registerUserHandler,
   },
   {
@@ -47,7 +50,7 @@ defineRoutes(userRouter, [
     path: '/:id',
     middlewares: [
       validateRequest(idSchema),
-      validateRequest(UserUpdateSchema),
+      validateRequest(userValidationSchema.UserUpdateSchema),
       authMiddlewares.isAuthenticated,
       authMiddlewares.hasRole(USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN),
     ],

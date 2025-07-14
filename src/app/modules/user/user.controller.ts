@@ -1,7 +1,6 @@
 import catchAsync from '@/utils/catchAsync';
 import { sendSuccessResponse } from '@/utils/response';
 import { StatusCodes } from 'http-status-codes';
-
 import { generateCookie } from '@/utils/cookie/cookie';
 import { expiresAccessTokenInMs, expiresRefreshTokenInMs } from '@/app/helper/expiresInMs';
 import { qb } from '@/app/libs/qb';
@@ -58,7 +57,7 @@ const getUsersHandler = catchAsync(async (req, res) => {
   const { meta, data } = await qb<IUser>(UserModel)
     .select('-password -createdAt -updatedAt')
     .filter({ role: req.query.role })
-    .search(req.query.search, ['name', 'email'])
+    .search(req.query.search, ['name', 'email',])
     .sort('-createdAt')
     .exec();
 

@@ -21,6 +21,7 @@ import {
 } from '@/config/env';
 import { IDeviceInfo } from '../session/session.model';
 import { checkAndCreateSession } from '../session/session.service';
+import sendingEmail from '@/services/email/emailSender';
 
 const existUserByEmail = async <T>(
   model: any,
@@ -73,7 +74,7 @@ const processUserRegistration = async (userData: UserSchema) => {
   };
   console.log(emailData);
   try {
-    // await sendingEmail(emailData);
+    await sendingEmail(emailData);
   } catch (error) {
     throw error;
   }
@@ -94,7 +95,7 @@ const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   await existUserByEmail(UserModel, decode.email as string);
 
   const user = await UserModel.create({
-    name: decode.email,
+    name: decode.name,
     email: decode.email,
     password: decode.password,
   });
@@ -120,6 +121,7 @@ const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
   };
 
   const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);
+  
   if (!accessToken) {
     throw UnauthorizedError('Access token creation failed');
   }

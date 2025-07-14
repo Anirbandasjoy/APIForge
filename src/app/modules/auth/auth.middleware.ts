@@ -8,6 +8,10 @@ import { UserRole } from '../user/user.constant';
 import { DeviceInfo } from './auth.interface';
 import useragent from 'useragent';
 
+
+// TODO : after change password 
+
+
 const isAuthenticated = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies?.accessToken;
