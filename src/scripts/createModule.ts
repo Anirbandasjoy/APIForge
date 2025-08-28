@@ -24,6 +24,11 @@ export const ${varName}Handler = catchAsync(async (req, res) => {
     data,
   });
 });
+
+export const ${varName}Controller = {
+  ${varName}Handler,
+};
+
 `,
 
   service: (
@@ -43,20 +48,24 @@ export const ${varName}Service = {
 };
 `,
 
-  model: (mod: string, Class: string, varName: string) => `import { Schema, model } from 'mongoose';
+  model: (
+    mod: string,
+    Class: string,
+    varName: string
+  ) => `import { Schema, model, Document } from 'mongoose';
 import { I${Class} } from './${mod}.schema';
 
-const ${varName}Schema = new Schema<I${Class}>({
+const ${varName}Schema = new Schema<I${Class} & Document>({
   name: { type: String, required: true },
 }, { timestamps: true });
 
-const ${Class}Model = model<I${Class}>('${Class}', ${varName}Schema);
+const ${Class}Model = model<I${Class} & Document>('${Class}', ${varName}Schema);
 export default ${Class}Model;
 `,
 
   schema: (_: string, Class: string, varName: string) => `import { z } from 'zod';
 
-export const create${Class} = z.object({
+const create${Class} = z.object({
   body: z.object({
     name: z.string({ required_error: '${Class} name is required' }),
   }),
@@ -75,7 +84,7 @@ export type I${Class} = z.infer<typeof create${Class}>['body'];
 `,
 
   route: (mod: string, Class: string, varName: string) => `import { Router } from 'express';
-import { ${varName}Handler } from './${mod}.controller';
+import { ${varName}Controller } from './${mod}.controller';
 import validateRequest from '@/app/middlewares/validateRequest';
 import { ${varName}Schema } from './${mod}.schema';
 import { defineRoutes } from '@/utils/defineRoutes';
@@ -87,7 +96,7 @@ defineRoutes(${varName}Router, [
     method: 'post',
     path: '/create',
     middlewares: [validateRequest(${varName}Schema.create${Class})],
-    handler: ${varName}Handler,
+    handler: ${varName}Controller.${varName}Handler,
   },
   // add other routes as needed
 ]);
