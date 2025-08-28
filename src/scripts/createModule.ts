@@ -30,10 +30,10 @@ export const ${varName}Handler = catchAsync(async (req, res) => {
     mod: string,
     Class: string,
     varName: string
-  ) => `import { ${Class}Input } from './${mod}.schema';
+  ) => `import { I${Class} } from './${mod}.schema';
 import ${Class}Model from './${mod}.model';
 
-const create${Class} = async (payload: ${Class}Input) => {
+const create${Class} = async (payload: I${Class}) => {
   const created = await ${Class}Model.create(payload);
   return created;
 };
@@ -44,13 +44,13 @@ export const ${varName}Service = {
 `,
 
   model: (mod: string, Class: string, varName: string) => `import { Schema, model } from 'mongoose';
-import { ${Class}Input } from './${mod}.schema';
+import { I${Class} } from './${mod}.schema';
 
-const ${varName}Schema = new Schema<${Class}Input>({
+const ${varName}Schema = new Schema<I${Class}>({
   name: { type: String, required: true },
 }, { timestamps: true });
 
-const ${Class}Model = model<${Class}Input>('${Class}', ${varName}Schema);
+const ${Class}Model = model<I${Class}>('${Class}', ${varName}Schema);
 export default ${Class}Model;
 `,
 
@@ -71,7 +71,7 @@ export const ${varName}Schema = {
 };
 
 // Type export for mongoose schema
-export type ${Class}Input = z.infer<typeof create${Class}>['body'];
+export type I${Class} = z.infer<typeof create${Class}>['body'];
 `,
 
   route: (mod: string, Class: string, varName: string) => `import { Router } from 'express';
