@@ -1,4 +1,4 @@
-import { smtp_password, smtp_username } from '@/config/env';
+import { config} from '@/config/env';
 import nodemailer from 'nodemailer';
 interface ISendEmailType {
   to: string;
@@ -10,15 +10,15 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: smtp_username,
-    pass: smtp_password,
+    user: config.SMTP_USERNAME,
+    pass: config.SMTP_PASSWORD,
   },
 });
 
 const sendingEmail = async (emailData: ISendEmailType) => {
   try {
     const options = {
-      from: smtp_username,
+      from: config.SMTP_USERNAME,
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,

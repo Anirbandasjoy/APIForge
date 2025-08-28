@@ -10,15 +10,7 @@ import { generateToken } from '@/utils/token/token';
 import { loadEmailTemplate } from '@/utils/email/loadEmailTemplate';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
-import {
-  CLIENT_URI,
-  JWT_ACCESS_EXPIRES_IN,
-  JWT_ACCESS_SECRET_KEY,
-  JWT_PROCESS_REGISTRATION_EXPIRIES_IN,
-  JWT_PROCESS_REGISTRATION_SECRET_KEY,
-  JWT_REFRESH_EXPIRES_IN,
-  JWT_REFRESH_SECRET_KEY,
-} from '@/config/env';
+import { config } from '@/config/env';
 import { IDeviceInfo } from '../session/session.model';
 import { checkAndCreateSession } from '../session/session.service';
 import sendingEmail from '@/services/email/emailSender';
@@ -55,8 +47,8 @@ const processUserRegistration = async (userData: UserSchema) => {
       password: userData.password,
       profilePicture: userData.profilePicture,
     },
-    JWT_PROCESS_REGISTRATION_SECRET_KEY as string,
-    JWT_PROCESS_REGISTRATION_EXPIRIES_IN
+    config.JWT_PROCESS_REGISTRATION_SECRET_KEY as string,
+    config.JWT_PROCESS_REGISTRATION_EXPIRES_IN
   );
   if (!token) {
     throw BadRequestError('Failed to generate token for user registration');
@@ -64,7 +56,7 @@ const processUserRegistration = async (userData: UserSchema) => {
 
   const html = loadEmailTemplate('verificationEmail.html', {
     user_name: userData.name,
-    verification_link: CLIENT_URI + '/user/verify?token=' + token,
+    verification_link: config.CLIENT_URI + '/user/verify?token=' + token,
   });
 
   const emailData = {
@@ -86,7 +78,7 @@ const processUserRegistration = async (userData: UserSchema) => {
 };
 
 const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
-  const decode = jwt.verify(token, JWT_PROCESS_REGISTRATION_SECRET_KEY) as UserSchema;
+  const decode = jwt.verify(token, config.JWT_PROCESS_REGISTRATION_SECRET_KEY) as UserSchema;
 
   if (!decode) {
     throw NonAuthoritativeInformation('Non Authoritative Information');
@@ -120,16 +112,20 @@ const registerUser = async (token: string, deviceInfo?: IDeviceInfo) => {
     sessionId,
   };
 
-  const accessToken = generateToken(data, JWT_ACCESS_SECRET_KEY as string, JWT_ACCESS_EXPIRES_IN);
-  
+  const accessToken = generateToken(
+    data,
+    config.JWT_ACCESS_SECRET_KEY as string,
+    config.JWT_ACCESS_EXPIRES_IN
+  );
+
   if (!accessToken) {
     throw UnauthorizedError('Access token creation failed');
   }
 
   const refreshToken = generateToken(
     data,
-    JWT_REFRESH_SECRET_KEY as string,
-    JWT_REFRESH_EXPIRES_IN
+    config.JWT_REFRESH_SECRET_KEY as string,
+    config.JWT_REFRESH_EXPIRES_IN
   );
   if (!refreshToken) {
     throw UnauthorizedError('Refresh token creation failed');
